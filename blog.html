@@ -26,7 +26,12 @@ body.no-scroll{overflow:hidden}
 a{color:inherit;text-decoration:none}button,input,textarea,select{font:inherit}
 button{cursor:pointer}
 
-.sidebar{position:fixed;inset:0 auto 0 0;z-index:1000;width:var(--sidebar);display:flex;flex-direction:column;padding:30px 16px 22px;background:#fff;border-right:1px solid var(--line);transition:.25s ease}
+.sidebar{position:fixed;inset:0 auto 0 0;z-index:1000;width:var(--sidebar);display:flex;flex-direction:column;padding:30px 16px 22px;background:#fff;border-right:1px solid var(--line);transition:transform .28s ease,width .25s ease;will-change:transform}
+/* Auto-hide navigation while the reader is idle. */
+body.nav-hidden .sidebar{transform:translateX(calc(-100% - 12px))}
+body.nav-hidden .main,body.collapsed.nav-hidden .main{margin-left:0}
+body.nav-hidden .mobile-menu{opacity:0;visibility:hidden;pointer-events:none;transform:translateY(-8px)}
+.mobile-menu{opacity:1;visibility:visible;transition:opacity .22s ease,transform .22s ease,visibility .22s ease}
 .collapse{position:absolute;top:18px;right:-19px;width:38px;height:38px;display:grid;place-items:center;border:0;border-radius:50%;color:#fff;background:var(--red);box-shadow:0 8px 20px rgba(227,27,35,.18)}
 .collapse:hover{background:var(--red-dark);transform:scale(1.05)}
 .collapse span{font-size:1.5rem;line-height:1}
@@ -167,7 +172,10 @@ footer strong{color:var(--red);font-size:.9rem} footer p{margin-top:4px;color:#8
 @media(max-width:1050px){:root{--sidebar:225px}.container,footer{width:min(100% - 48px,900px)}}
 @media(max-width:900px){
   .sidebar{width:min(285px,86vw);transform:translateX(-105%);box-shadow:18px 0 45px rgba(18,28,45,.13)}
-  .sidebar.open{transform:translateX(0)}.collapse{display:none}.main,body.collapsed .main{margin-left:0}
+  .sidebar.open{transform:translateX(0)}
+  body.nav-hidden .sidebar{transform:translateX(-105%)}
+  body.nav-hidden .sidebar.open{transform:translateX(0)}
+  .collapse{display:none}.main,body.collapsed .main{margin-left:0}
   .mobile-menu{position:fixed;top:14px;left:14px;z-index:1100;width:43px;height:43px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;border:0;border-radius:8px;background:var(--red);box-shadow:0 8px 22px rgba(227,27,35,.18)}
   .mobile-menu span{width:18px;height:2px;background:#fff;border-radius:2px}
   .backdrop{position:fixed;inset:0;z-index:900;display:block;background:rgba(20,27,39,.35);opacity:0;visibility:hidden;transition:.2s}
@@ -1197,7 +1205,62 @@ footer strong{color:var(--red);font-size:.9rem} footer p{margin-top:4px;color:#8
     mobileSidebar(!$("sidebar").classList.contains("open"))
   );
   $("backdrop").addEventListener("click",() => mobileSidebar(false));
-  window.addEventListener("resize",() => { if (innerWidth > 900) mobileSidebar(false); });
+
+  // Show navigation as soon as scrolling starts; hide it 1.7 seconds after scrolling stops.
+  // Hover and keyboard focus keep the desktop sidebar available for interaction.
+  const navIdleDelay = 1700;
+  let navHideTimer = null;
+  let hasUserScrolled = false;
+  const sidebarEl = $("sidebar");
+  const mobileMenuEl = $("mobileMenu");
+
+  function showNavigation() {
+    document.body.classList.remove("nav-hidden");
+    if (navHideTimer) clearTimeout(navHideTimer);
+    navHideTimer = null;
+  }
+
+  function scheduleNavigationHide() {
+    if (navHideTimer) clearTimeout(navHideTimer);
+    if (!hasUserScrolled || sidebarEl.classList.contains("open") ||
+        sidebarEl.matches(":hover") || sidebarEl.contains(document.activeElement) ||
+        mobileMenuEl === document.activeElement) return;
+
+    navHideTimer = setTimeout(() => {
+      if (!sidebarEl.classList.contains("open") &&
+          !sidebarEl.matches(":hover") &&
+          !sidebarEl.contains(document.activeElement) &&
+          mobileMenuEl !== document.activeElement) {
+        document.body.classList.add("nav-hidden");
+      }
+    }, navIdleDelay);
+  }
+
+  window.addEventListener("scroll", () => {
+    hasUserScrolled = true;
+    showNavigation();
+    scheduleNavigationHide();
+  }, { passive: true });
+
+  sidebarEl.addEventListener("mouseenter", showNavigation);
+  sidebarEl.addEventListener("mouseleave", scheduleNavigationHide);
+  sidebarEl.addEventListener("focusin", showNavigation);
+  sidebarEl.addEventListener("focusout", () => setTimeout(scheduleNavigationHide, 0));
+  mobileMenuEl.addEventListener("focus", showNavigation);
+  mobileMenuEl.addEventListener("blur", scheduleNavigationHide);
+
+  // If the mobile drawer is open, keep its controls visible and usable.
+  const originalMobileSidebar = mobileSidebar;
+  mobileSidebar = function(open) {
+    originalMobileSidebar(open);
+    if (open) showNavigation();
+    else scheduleNavigationHide();
+  };
+
+  window.addEventListener("resize",() => {
+    if (innerWidth > 900) mobileSidebar(false);
+    showNavigation();
+  });
   $("year").textContent = new Date().getFullYear();
 
   async function route() {
