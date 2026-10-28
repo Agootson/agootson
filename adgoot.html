@@ -3,2681 +3,750 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Website Adgoot | David Agootson</title>
-  <meta name="robots" content="noindex, nofollow">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <meta name="theme-color" content="#0b0b0b">
+  <title>Admin Dashboard | David Agootson</title>
+  <link rel="icon" href="images.png" type="image/png">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
-      --red:#e31b23; --red-dark:#b9151c; --red-soft:#fff1f2;
-      --text:#20242a; --muted:#747b86; --line:#e7e9ed;
-      --bg:#f7f8fa; --white:#fff; --green:#238636; --yellow:#a66a00;
-      --shadow:0 14px 40px rgba(25,31,40,.08);
+      --bg: #0b0b0b;
+      --panel: #151515;
+      --panel2: #202020;
+      --text: #f5f5f5;
+      --muted: #a3a3a3;
+      --accent: #e53935;
+      --border: #303030;
+      --green: #38b66b;
     }
-    * { box-sizing:border-box; }
-    body { margin:0; font-family:Inter,Arial,sans-serif; color:var(--text); background:var(--bg); }
-    button,input { font:inherit; }
-
-    .sidebar {
-      position: fixed;
-      inset: 0 auto 0 0;
-      z-index: 1000;
-      width: 250px;
-      display: flex;
-      flex-direction: column;
-      padding: 30px 16px 22px;
-      background: var(--white);
-      border-right: 1px solid var(--line);
-      transition: width .25s ease, transform .25s ease;
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font: 15px/1.5 system-ui, -apple-system, Segoe UI, sans-serif;
     }
-
-    .collapse {
-      position: absolute;
-      top: 18px;
-      right: -19px;
-      width: 38px;
-      height: 38px;
-      display: grid;
-      place-items: center;
-      border: 0;
-      border-radius: 50%;
-      color: white;
-      background: var(--red);
-      cursor: pointer;
-      box-shadow: 0 8px 20px rgba(227,27,35,.18);
-      transition: .2s ease;
+    button, input, textarea, select { font: inherit; }
+    button {
+      cursor: pointer; border: 0; border-radius: 9px;
+      padding: 10px 14px; color: white; background: var(--accent);
     }
-
-    .collapse:hover {
-      background: var(--red-dark);
-      transform: scale(1.05);
+    button.secondary { background: var(--panel2); border: 1px solid var(--border); }
+    button.danger { background: #922d2d; }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+    input, textarea, select {
+      width: 100%; padding: 11px; border-radius: 8px;
+      background: #101010; border: 1px solid var(--border); color: var(--text);
     }
-
-    .collapse span {
-      font-size: 1.5rem;
-      line-height: 1;
-      transform: translateY(-1px);
+    textarea { min-height: 130px; resize: vertical; }
+    label { display: block; margin: 12px 0 6px; color: var(--muted); }
+    h1, h2, h3 { line-height: 1.2; }
+    h1 { font-size: clamp(25px, 4vw, 34px); }
+    h2 { font-size: 21px; }
+    .muted { color: var(--muted); }
+    .hidden { display: none !important; }
+    .layout { display: grid; grid-template-columns: 245px minmax(0, 1fr); min-height: 100vh; }
+    aside {
+      background: #101010; border-right: 1px solid var(--border);
+      padding: 22px 14px; position: sticky; top: 0; height: 100vh; overflow-y: auto;
     }
-
-    .site-nav {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
+    .brand { padding: 8px 10px 20px; font-size: 18px; font-weight: 750; }
+    .brand span { color: var(--accent); }
+    .nav { display: grid; gap: 6px; }
+    .nav button {
+      text-align: left; background: transparent; color: #ccc;
+      border: 1px solid transparent;
     }
-
-    .site-nav a {
-      position: relative;
-      min-height: 48px;
-      display: flex;
-      align-items: center;
-      gap: 17px;
-      padding: 10px 14px;
-      border-radius: 7px;
-      color: #72767d;
-      font-size: .79rem;
-      font-weight: 600;
-      text-decoration: none;
-      transition: background .18s ease, color .18s ease, transform .18s ease;
+    .nav button.active, .nav button:hover {
+      background: #242424; color: white; border-color: var(--border);
     }
-
-    .site-nav a:hover {
-      color: var(--red);
-      background: #fff5f5;
-      transform: translateX(2px);
-    }
-
-    .site-nav a.active {
-      color: var(--red);
-      background: var(--red-soft);
-    }
-
-    .site-nav a.active::before {
-      content: "";
-      position: absolute;
-      left: -16px;
-      top: 8px;
-      bottom: 8px;
-      width: 4px;
-      border-radius: 0 4px 4px 0;
-      background: var(--red);
-    }
-
-    .site-nav .icon {
-      width: 22px;
-      flex: 0 0 22px;
-      display: grid;
-      place-items: center;
-      color: #737982;
-      font-size: .95rem;
-      line-height: 1;
-      transition: color .18s ease, transform .18s ease;
-    }
-
-    .site-nav a:hover .icon,
-    .site-nav a.active .icon {
-      color: var(--red);
-    }
-
-    .site-nav a:hover .icon {
-      transform: scale(1.06);
-    }
-
-    body.collapsed .sidebar {
-      width: 78px;
-    }
-
-    body.collapsed .nav-label {
-      display: none;
-    }
-
-    body.collapsed .site-nav a {
-      justify-content: center;
-      padding-inline: 0;
-    }
-
-    body.collapsed .collapse span {
-      transform: rotate(180deg);
-    }
-
-    #adminApp {
-      margin-left: 250px;
-      transition: margin-left .25s ease;
-    }
-
-    body.collapsed #adminApp {
-      margin-left: 78px;
-    }
-
-    .site-footer {
-      width: min(1120px, calc(100% - 72px));
-      margin: 40px auto 0;
-      padding: 42px 0 28px;
-      display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      align-items: center;
-      gap: 16px 30px;
-      border-top: 1px solid var(--line);
-    }
-
-    .site-footer strong {
-      color: var(--red);
-      font-size: .9rem;
-    }
-
-    .site-footer p {
-      margin-top: 4px;
-      color: #8b9098;
-      font-size: .62rem;
-    }
-
-    .site-footer .socials {
-      display: flex;
-      justify-content: center;
-      gap: 7px;
-      align-items: center;
-      justify-self: center;
-    }
-
-    .site-footer .socials a {
-      width: 36px;
-      height: 36px;
-      display: grid;
-      place-items: center;
-      border: 1px solid #dfe2e7;
-      border-radius: 50%;
-      background: white;
-      color: #666d76;
-      font-size: .92rem;
-      font-weight: 500;
-      text-decoration: none;
-      transition: color .2s ease, background .2s ease, border-color .2s ease,
-                  transform .2s ease, box-shadow .2s ease;
-    }
-
-    .site-footer .socials a:hover {
-      color: var(--red);
-      background: var(--red-soft);
-      border-color: #f2b9bd;
-      transform: translateY(-3px);
-      box-shadow: 0 8px 18px rgba(220, 38, 46, .12);
-    }
-
-    .site-footer .copyright {
-      grid-column: 1 / -1;
-      text-align: center;
-      padding-top: 10px;
-    }
-
-    .mobile-menu {
-      display: none;
-    }
-
-    .backdrop {
-      display: none;
-    }
-
-    @media (max-width: 1050px) {
-      .site-footer {
-        width: min(100% - 48px, 900px);
-      }
-    }
-
+    main { padding: 26px; max-width: 1500px; width: 100%; margin: auto; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 22px 0; }
+    .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 18px; min-width: 0; }
+    .metric { font-size: 30px; font-weight: 750; margin-top: 8px; }
+    .section { margin-top: 22px; }
+    .section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .full { grid-column: 1 / -1; }
+    .item { border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin: 12px 0; background: #111; }
+    .item-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .item p { white-space: pre-wrap; overflow-wrap: anywhere; }
+    .pill { display: inline-block; font-size: 12px; padding: 4px 8px; border-radius: 999px; background: #292929; color: #ddd; }
+    .pill.green { color: #9ae6b4; background: #143322; }
+    .pill.red { color: #ffb4b4; background: #401a1a; }
+    .notice { padding: 12px 14px; border: 1px solid var(--border); border-radius: 9px; margin: 12px 0; }
+    .notice.error { border-color: #8d3030; color: #ffb8b8; }
+    .notice.success { border-color: #246c41; color: #a5f0bd; }
+    .login-wrap { min-height: 100vh; display: grid; place-items: center; padding: 20px; }
+    .login { width: min(440px, 100%); }
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+    .search { max-width: 380px; }
+    .empty { padding: 35px 15px; text-align: center; color: var(--muted); }
+    .status { color: var(--muted); font-size: 13px; }
+    .reply-box { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+    .toast { position: fixed; bottom: 20px; right: 20px; max-width: 360px; z-index: 20; }
     @media (max-width: 900px) {
-      .sidebar {
-        width: min(285px, 86vw);
-        transform: translateX(-105%);
-        box-shadow: 18px 0 45px rgba(18,28,45,.13);
-      }
-
-      .sidebar.open {
-        transform: translateX(0);
-      }
-
-      .collapse {
-        display: none;
-      }
-
-      #adminApp,
-      body.collapsed #adminApp {
-        margin-left: 0;
-      }
-
-      .mobile-menu {
-        position: fixed;
-        top: 14px;
-        left: 14px;
-        z-index: 1100;
-        width: 43px;
-        height: 43px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        gap: 5px;
-        border: 0;
-        border-radius: 8px;
-        background: var(--red);
-        cursor: pointer;
-        box-shadow: 0 8px 22px rgba(227,27,35,.18);
-      }
-
-      .mobile-menu span {
-        width: 18px;
-        height: 2px;
-        background: white;
-        border-radius: 2px;
-      }
-
-      .backdrop {
-        position: fixed;
-        inset: 0;
-        z-index: 900;
-        display: block;
-        background: rgba(20,27,39,.35);
-        opacity: 0;
-        visibility: hidden;
-        transition: .2s ease;
-      }
-
-      .backdrop.show {
-        opacity: 1;
-        visibility: visible;
-      }
-
-      .site-footer {
-        width: min(100% - 34px, 720px);
-      }
+      .layout { grid-template-columns: 1fr; }
+      aside { position: static; height: auto; padding: 12px; border-right: 0; border-bottom: 1px solid var(--border); }
+      .nav { display: flex; overflow-x: auto; padding-bottom: 5px; }
+      .nav button { white-space: nowrap; }
+      main { padding: 18px; }
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 520px) {
+      .grid, .form-grid { grid-template-columns: 1fr; }
+      .full { grid-column: auto; }
+      main { padding: 14px; }
     }
-
-    @media (max-width: 600px) {
-      .site-footer {
-        width: calc(100% - 28px);
-        grid-template-columns: 1fr;
-        text-align: center;
-      }
-
-      .site-footer .socials {
-        justify-content: center;
-      }
-
-      .site-footer .copyright {
-        grid-column: auto;
-      }
-    }
-
-    .topbar {
-      height:70px; background:#171a1f; color:white; display:flex; align-items:center;
-      justify-content:space-between; padding:0 28px; position:sticky; top:0; z-index:10;
-    }
-    .brand { display:flex; align-items:center; gap:12px; font-weight:800; }
-    .brand-mark {
-      width:38px; height:38px; border-radius:10px; background:var(--red);
-      display:grid; place-items:center;
-    }
-    .top-actions { display:flex; align-items:center; gap:14px; }
-    .user-email { color:#b9bec7; font-size:.78rem; }
-    .logout { border:1px solid #454a52; background:transparent; color:white; padding:9px 13px; border-radius:8px; cursor:pointer; }
-    .logout:hover { border-color:#777e89; }
-    .wrap { max-width:1200px; margin:0 auto; padding:32px 20px 60px; }
-    .hero { margin-bottom:24px; }
-    .eyebrow { color:var(--red); letter-spacing:.18em; font-size:.7rem; font-weight:800; }
-    h1 { margin:8px 0 7px; font-size:2rem; letter-spacing:-.04em; }
-    .hero p { margin:0; color:var(--muted); font-size:.9rem; }
-    .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin:24px 0; }
-    .stat {
-      background:var(--white); border:1px solid var(--line); border-radius:12px;
-      padding:18px; box-shadow:0 5px 20px rgba(25,31,40,.03);
-    }
-    .stat small { display:block; color:var(--muted); font-size:.7rem; font-weight:700; }
-    .stat strong { display:block; margin-top:6px; font-size:1.55rem; }
-    .stat.pending strong { color:var(--yellow); }
-    .stat.approved strong { color:var(--green); }
-    .stat.rejected strong { color:var(--red); }
-    .panel {
-      background:var(--white); border:1px solid var(--line); border-radius:14px;
-      box-shadow:var(--shadow); overflow:hidden;
-    }
-    .toolbar {
-      padding:18px; border-bottom:1px solid var(--line); display:flex; gap:12px;
-      align-items:center; justify-content:space-between; flex-wrap:wrap;
-    }
-    .section-switcher {
-      display:flex; gap:7px; flex-wrap:wrap; margin-bottom:16px;
-    }
-    .section-btn {
-      border:1px solid var(--line); background:#fff; color:#5f6670;
-      border-radius:8px; padding:10px 14px; font-size:.74rem; font-weight:800; cursor:pointer;
-    }
-    .section-btn.active {
-      background:var(--red); border-color:var(--red); color:#fff;
-    }
-    .section-btn:hover { border-color:#e6a2a5; }
-
-    .btn {
-      appearance: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      min-height: 42px;
-      padding: 10px 16px;
-      border: 1px solid rgba(255,255,255,.72);
-      border-radius: 12px;
-      color: #20242a;
-      background:
-        linear-gradient(
-          135deg,
-          rgba(255,255,255,.82),
-          rgba(255,255,255,.48)
-        );
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.9),
-        inset 0 -1px 0 rgba(255,255,255,.28),
-        0 8px 22px rgba(25,31,40,.08);
-      backdrop-filter: blur(14px) saturate(145%);
-      -webkit-backdrop-filter: blur(14px) saturate(145%);
-      font-size: .72rem;
-      font-weight: 800;
-      line-height: 1;
-      cursor: pointer;
-      transition:
-        transform .18s ease,
-        box-shadow .18s ease,
-        background .18s ease,
-        border-color .18s ease;
-    }
-
-    .btn:hover {
-      transform: translateY(-2px);
-      border-color: rgba(255,255,255,.95);
-      background:
-        linear-gradient(
-          135deg,
-          rgba(255,255,255,.94),
-          rgba(255,255,255,.58)
-        );
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,1),
-        0 12px 28px rgba(25,31,40,.12);
-    }
-
-    .btn:active {
-      transform: translateY(0);
-      box-shadow:
-        inset 0 2px 5px rgba(25,31,40,.08),
-        0 5px 14px rgba(25,31,40,.07);
-    }
-
-    .btn:focus-visible {
-      outline: none;
-      border-color: rgba(227,27,35,.48);
-      box-shadow:
-        0 0 0 4px rgba(227,27,35,.10),
-        inset 0 1px 0 rgba(255,255,255,.95),
-        0 10px 24px rgba(25,31,40,.10);
-    }
-
-    .btn i {
-      font-size: .82rem;
-    }
-
-    .btn:not(.secondary) {
-      color: var(--red-dark);
-      border-color: rgba(227,27,35,.20);
-      background:
-        linear-gradient(
-          135deg,
-          rgba(255,255,255,.88),
-          rgba(255,241,242,.72)
-        );
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.96),
-        inset 0 -1px 0 rgba(255,255,255,.35),
-        0 8px 22px rgba(227,27,35,.10);
-    }
-
-    .btn:not(.secondary):hover {
-      color: var(--red);
-      border-color: rgba(227,27,35,.34);
-      background:
-        linear-gradient(
-          135deg,
-          rgba(255,255,255,.96),
-          rgba(255,241,242,.88)
-        );
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,1),
-        0 12px 28px rgba(227,27,35,.15);
-    }
-
-    .btn.secondary {
-      color: #5f6670;
-      border-color: rgba(185,191,201,.50);
-    }
-
-    .btn.secondary:hover {
-      color: #20242a;
-      border-color: rgba(140,148,160,.42);
-    }
-
-    .btn:disabled {
-      opacity: .55;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-
-    @supports not ((backdrop-filter: blur(14px))) {
-      .btn {
-        background: rgba(255,255,255,.94);
-      }
-
-      .btn:not(.secondary) {
-        background: rgba(255,241,242,.96);
-      }
-    }
-
-    .blog-admin-panel {
-      margin-top: 0;
-      background: var(--white);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-    .blog-admin-panel[hidden] { display:none !important; }
-    .blog-admin-toolbar {
-      padding: 18px;
-      border-bottom: 1px solid var(--line);
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      flex-wrap:wrap;
-    }
-    .blog-admin-toolbar h2 { margin:0; font-size:1rem; }
-    .blog-admin-toolbar p { margin:4px 0 0; color:var(--muted); font-size:.68rem; }
-    .blog-admin-controls { display:flex; gap:8px; flex-wrap:wrap; }
-    .blog-tab {
-      border:1px solid var(--line); background:#f7f8fa; color:#5f6670;
-      border-radius:8px; padding:9px 12px; font-size:.7rem; font-weight:800; cursor:pointer;
-    }
-    .blog-tab.active { background:#20242a; border-color:#20242a; color:#fff; }
-    .blog-admin-search {
-      width:260px; max-width:100%; border:1px solid var(--line); border-radius:8px;
-      padding:10px 12px; outline:none; font-size:.74rem;
-    }
-    .blog-admin-search:focus { border-color:#e6a2a5; box-shadow:0 0 0 3px var(--red-soft); }
-    .blog-editor {
-      padding:18px;
-      border-bottom:1px solid var(--line);
-      background:#fcfcfd;
-    }
-    .blog-editor-head {
-      display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px;
-    }
-    .blog-editor-head h3 { margin:0; font-size:.95rem; }
-    .blog-editor-grid {
-      display:grid; grid-template-columns:1fr 1fr; gap:12px;
-    }
-    .blog-editor-grid .full { grid-column:1/-1; }
-    .blog-field { display:grid; gap:6px; }
-    .blog-field label { font-size:.66rem; font-weight:800; color:#6b7179; }
-    .blog-field input, .blog-field textarea, .blog-field select {
-      width:100%; border:1px solid var(--line); border-radius:8px; padding:11px 12px;
-      background:#fff; outline:none; font-size:.74rem;
-    }
-    .blog-field textarea { min-height:115px; resize:vertical; }
-    .blog-field textarea.content { min-height:300px; }
-    .blog-field input:focus, .blog-field textarea:focus, .blog-field select:focus {
-      border-color:#e6a2a5; box-shadow:0 0 0 3px var(--red-soft);
-    }
-    .blog-editor-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
-    .blog-help { margin-top:8px; color:#8b919a; font-size:.62rem; line-height:1.55; }
-    .blog-admin-list { padding:16px; display:grid; gap:10px; }
-    .blog-post-row {
-      border:1px solid var(--line); border-radius:11px; padding:14px;
-      display:grid; grid-template-columns:1fr auto; gap:14px; align-items:center;
-      background:#fff;
-    }
-    .blog-post-row:hover { border-color:#d8dbe0; }
-    .blog-post-title { font-size:.84rem; font-weight:800; overflow-wrap:anywhere; }
-    .blog-post-meta {
-      display:flex; flex-wrap:wrap; gap:7px; align-items:center; margin-top:7px;
-      color:#8b919a; font-size:.62rem;
-    }
-    .blog-status {
-      display:inline-flex; align-items:center; border-radius:999px; padding:5px 9px;
-      font-size:.61rem; font-weight:800;
-    }
-    .blog-status.published { background:#eaf7ee; color:var(--green); }
-    .blog-status.draft { background:#eef2f7; color:#59636f; }
-    .blog-status.scheduled { background:#fff6df; color:var(--yellow); }
-    .blog-status.archived { background:var(--red-soft); color:var(--red-dark); }
-    .blog-row-actions { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
-    .blog-row-actions button {
-      border:1px solid var(--line); background:#fff; border-radius:7px;
-      padding:8px 10px; font-size:.61rem; font-weight:800; cursor:pointer;
-    }
-    .blog-row-actions button:hover { color:var(--red); border-color:#efb9bd; }
-    .blog-row-actions .danger { color:var(--red-dark); }
-    .blog-empty { padding:42px 20px; text-align:center; color:var(--muted); font-size:.78rem; }
-    .blog-counter {
-      display:inline-flex; align-items:center; gap:6px; padding:7px 10px; border-radius:8px;
-      background:#f4f5f7; color:#626770; font-size:.62rem; font-weight:800;
-    }
-
-    .newsletter-admin-panel {
-      margin-top: 0;
-      background: var(--white);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-    .newsletter-admin-panel[hidden] { display:none !important; }
-    .newsletter-admin-toolbar {
-      padding:18px;
-      border-bottom:1px solid var(--line);
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      flex-wrap:wrap;
-    }
-    .newsletter-admin-toolbar h2 { margin:0; font-size:1rem; }
-    .newsletter-admin-toolbar p { margin:4px 0 0; color:var(--muted); font-size:.68rem; }
-    .newsletter-admin-controls { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-    .newsletter-tabs { display:flex; gap:7px; flex-wrap:wrap; }
-    .newsletter-tab {
-      border:1px solid var(--line);
-      background:#f7f8fa;
-      color:#5f6670;
-      border-radius:8px;
-      padding:9px 12px;
-      font-size:.7rem;
-      font-weight:800;
-      cursor:pointer;
-    }
-    .newsletter-tab.active { background:#20242a; border-color:#20242a; color:#fff; }
-    .newsletter-search {
-      width:280px;
-      max-width:100%;
-      border:1px solid var(--line);
-      border-radius:9px;
-      padding:10px 12px;
-      outline:none;
-      font-size:.74rem;
-    }
-    .newsletter-search:focus {
-      border-color:#e6a2a5;
-      box-shadow:0 0 0 3px var(--red-soft);
-    }
-    .newsletter-list { padding:16px; display:grid; gap:10px; }
-    .newsletter-row {
-      border:1px solid var(--line);
-      border-radius:11px;
-      padding:14px 16px;
-      display:grid;
-      grid-template-columns:1fr auto;
-      gap:14px;
-      align-items:center;
-      background:#fff;
-    }
-    .newsletter-row:hover { border-color:#d8dbe0; }
-    .newsletter-email {
-      font-size:.82rem;
-      font-weight:800;
-      overflow-wrap:anywhere;
-    }
-    .newsletter-meta {
-      display:flex;
-      flex-wrap:wrap;
-      gap:7px;
-      align-items:center;
-      margin-top:7px;
-      color:#8b919a;
-      font-size:.62rem;
-    }
-    .newsletter-status {
-      display:inline-flex;
-      align-items:center;
-      border-radius:999px;
-      padding:5px 9px;
-      font-size:.61rem;
-      font-weight:800;
-    }
-    .newsletter-status.active { background:#eaf7ee; color:var(--green); }
-    .newsletter-status.unsubscribed { background:#f2f3f5; color:#737a84; }
-    .newsletter-row-actions {
-      display:flex;
-      gap:6px;
-      flex-wrap:wrap;
-      justify-content:flex-end;
-    }
-    .newsletter-row-actions .action { min-width:92px; }
-    .newsletter-note {
-      padding:0 16px 16px;
-      color:#8b919a;
-      font-size:.62rem;
-      line-height:1.55;
-    }
-
-    .contact-card {
-      border:1px solid var(--line); border-radius:12px; padding:16px;
-      display:grid; grid-template-columns:1fr auto; gap:16px;
-    }
-    .contact-card:hover { border-color:#d8dbe0; }
-    .contact-subject {
-      margin:4px 0 8px; font-size:.95rem; font-weight:800; color:var(--text);
-      overflow-wrap:anywhere;
-    }
-    .contact-email {
-      color:#5f6670; font-size:.72rem; text-decoration:none; overflow-wrap:anywhere;
-    }
-    .contact-email:hover { color:var(--red); }
-    .contact-message {
-      margin:10px 0 0; color:#4d545e; font-size:.82rem; line-height:1.65;
-      white-space:pre-wrap; overflow-wrap:anywhere;
-    }
-    .badge.new { background:#fff6df; color:var(--yellow); }
-    .badge.read { background:#eef2f7; color:#59636f; }
-    .badge.replied { background:#eaf7ee; color:var(--green); }
-    .badge.archived { background:#f2f3f5; color:#737a84; }
-    .badge.spam { background:var(--red-soft); color:var(--red-dark); }
-    .contact-meta-line {
-      display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:8px;
-      color:#8b919a; font-size:.64rem;
-    }
-    .category-badge {
-      display:inline-flex; align-items:center; border-radius:999px; padding:5px 9px;
-      font-size:.64rem; font-weight:800; background:#f2f3f5; color:#646b75;
-    }
-
-    .tabs { display:flex; gap:7px; flex-wrap:wrap; }
-    .tabs[hidden] { display:none !important; }
-    .list[hidden] { display:none !important; }
-    .tab {
-      border:1px solid var(--line); background:#f7f8fa; color:#5f6670;
-      border-radius:8px; padding:9px 12px; font-size:.74rem; font-weight:800; cursor:pointer;
-    }
-    .tab.active { background:#20242a; border-color:#20242a; color:white; }
-    .search {
-      width:280px; max-width:100%; border:1px solid var(--line); border-radius:8px;
-      padding:10px 12px; outline:none;
-    }
-    .search:focus { border-color:#e6a2a5; box-shadow:0 0 0 3px var(--red-soft); }
-    .list { padding:16px; display:grid; gap:12px; }
-    .comment-card {
-      border:1px solid var(--line); border-radius:12px; padding:16px;
-      display:grid; grid-template-columns:1fr auto; gap:16px;
-    }
-    .comment-card:hover { border-color:#d8dbe0; }
-    .meta { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px; }
-    .badge {
-      display:inline-flex; align-items:center; border-radius:999px; padding:5px 9px;
-      font-size:.64rem; font-weight:800; background:#f2f3f5; color:#646b75;
-    }
-    .badge.pending { background:#fff6df; color:var(--yellow); }
-    .badge.approved { background:#eaf7ee; color:var(--green); }
-    .badge.rejected { background:var(--red-soft); color:var(--red-dark); }
-    .name { font-size:.82rem; font-weight:800; }
-    .date { color:#9298a1; font-size:.65rem; }
-    .comment-text { margin:0; color:#4d545e; font-size:.82rem; line-height:1.65; white-space:pre-wrap; overflow-wrap:anywhere; }
-    .photo-ref { margin-top:10px; color:#8b919a; font-size:.64rem; }
-    .photo-ref strong { color:#606771; }
-    .actions { display:flex; flex-direction:column; gap:7px; min-width:105px; }
-    .action {
-      border:0; border-radius:8px; padding:9px 11px; cursor:pointer; font-size:.68rem; font-weight:800;
-    }
-    .approve { background:#eaf7ee; color:var(--green); }
-    .reject { background:#fff6df; color:var(--yellow); }
-    .delete { background:var(--red-soft); color:var(--red-dark); }
-    .action:hover { filter:brightness(.97); }
-    .empty { padding:45px 20px; text-align:center; color:var(--muted); font-size:.82rem; }
-    .loading { padding:30px; text-align:center; color:var(--muted); }
-    .notice {
-      margin-bottom:18px; padding:12px 14px; border-radius:9px; font-size:.74rem;
-      display:none;
-    }
-    .notice.show { display:block; }
-    .notice.error { background:var(--red-soft); color:var(--red-dark); border:1px solid #f0c5c8; }
-    .notice.success { background:#eaf7ee; color:var(--green); border:1px solid #cbe8d3; }
-    .login-screen { min-height:100vh; display:grid; place-items:center; padding:20px; }
-    .login-card {
-      width:min(420px,100%); background:white; border:1px solid var(--line);
-      border-radius:16px; padding:30px; box-shadow:var(--shadow);
-    }
-    .login-icon {
-      width:48px; height:48px; border-radius:12px; background:var(--red);
-      color:white; display:grid; place-items:center; margin-bottom:18px;
-    }
-    .login-card h1 { font-size:1.45rem; }
-    .login-card p { color:var(--muted); font-size:.78rem; line-height:1.6; }
-    .login-card label { display:block; margin:15px 0 6px; font-size:.7rem; font-weight:800; }
-    .login-card input {
-      width:100%; border:1px solid var(--line); border-radius:8px; padding:11px 12px; outline:none;
-    }
-    .login-card input:focus { border-color:#e6a2a5; box-shadow:0 0 0 3px var(--red-soft); }
-    .login-btn {
-      width:100%; margin-top:17px; border:0; border-radius:8px; padding:12px;
-      background:var(--red); color:white; font-size:.75rem; font-weight:800; cursor:pointer;
-    }
-    .login-btn:hover { background:var(--red-dark); }
-    .login-btn:disabled { opacity:.6; cursor:not-allowed; }
-    .login-error { color:var(--red-dark); font-size:.72rem; margin-top:10px; min-height:1em; }
-    .login-loading { color:var(--muted); font-size:.72rem; margin-top:10px; }
-    #adminApp { display:none; }
-    @media(max-width:800px) {
-      .blog-editor-grid { grid-template-columns:1fr; }
-      .blog-editor-grid .full { grid-column:auto; }
-      .blog-post-row { grid-template-columns:1fr; }
-      .blog-row-actions { justify-content:flex-start; }
-      .blog-admin-search { width:100%; }
-      .stats { grid-template-columns:repeat(2,1fr); }
-      .comment-card,
-      .contact-card,
-      .newsletter-row { grid-template-columns:1fr; }
-      .actions,
-      .newsletter-row-actions { flex-direction:row; flex-wrap:wrap; justify-content:flex-start; }
-      .newsletter-search { width:100%; }
-    }
-    @media(max-width:520px) {
-      .topbar { padding:0 16px; }
-      .user-email { display:none; }
-      .wrap { padding:24px 12px 45px; }
-      h1 { font-size:1.6rem; }
-      .stats { gap:8px; }
-      .stat { padding:13px; }
-      .stat strong { font-size:1.25rem; }
-      .toolbar { align-items:stretch; }
-      .search { width:100%; }
-      .comment-card { padding:13px; }
-    }
-
-    .reply-modal {
-      position: fixed; inset: 0; z-index: 3000; display:grid; place-items:center;
-      padding:20px; background:rgba(20,27,39,.48); backdrop-filter:blur(7px);
-      -webkit-backdrop-filter:blur(7px);
-    }
-    .reply-modal[hidden] { display:none !important; }
-    .reply-card {
-      width:min(720px,100%); max-height:min(88vh,760px); overflow:auto;
-      background:#fff; border:1px solid var(--line); border-radius:18px;
-      box-shadow:0 28px 80px rgba(15,23,42,.22);
-    }
-    .reply-head {
-      padding:20px 22px; display:flex; align-items:center; justify-content:space-between;
-      gap:14px; border-bottom:1px solid var(--line);
-    }
-    .reply-head h2 { margin:0; font-size:1.05rem; }
-    .reply-head p { margin:5px 0 0; color:var(--muted); font-size:.68rem; }
-    .reply-close {
-      width:36px;height:36px;border:1px solid var(--line);border-radius:10px;
-      background:#fff;color:#666d76;cursor:pointer;
-    }
-    .reply-close:hover { color:var(--red); border-color:#efb9bd; }
-    .reply-body { padding:20px 22px; display:grid; gap:14px; }
-    .reply-field { display:grid; gap:6px; }
-    .reply-field label { font-size:.66rem; font-weight:800; color:#6b7179; }
-    .reply-field input, .reply-field textarea {
-      width:100%; border:1px solid var(--line); border-radius:9px; padding:11px 12px;
-      background:#fff; outline:none; font-size:.76rem;
-    }
-    .reply-field textarea { min-height:190px; resize:vertical; line-height:1.6; }
-    .reply-field input:focus, .reply-field textarea:focus {
-      border-color:#e6a2a5; box-shadow:0 0 0 3px var(--red-soft);
-    }
-    .reply-original {
-      padding:13px 14px; border:1px solid var(--line); border-radius:10px;
-      background:#f8f9fb; color:#59616c; font-size:.72rem; line-height:1.6;
-      white-space:pre-wrap; overflow-wrap:anywhere;
-    }
-    .reply-original strong { color:#30363d; }
-    .reply-actions {
-      display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap;
-      padding:0 22px 20px;
-    }
-    .reply-status { margin:0 22px 14px; font-size:.7rem; min-height:1em; }
-    .reply-status.error { color:var(--red-dark); }
-    .reply-status.success { color:var(--green); }
-
   </style>
 </head>
 <body>
+  <div id="loginView" class="login-wrap">
+    <form id="loginForm" class="card login">
+      <div class="brand">WEBSITE <span>ADGOOT</span></div>
+      <h1>Admin sign in</h1>
+      <p class="muted">Sign in with your authorized Supabase admin account.</p>
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="username" required>
+      <label for="password">Password</label>
+      <input id="password" type="password" autocomplete="current-password" required>
+      <div class="toolbar"><button type="submit" id="loginButton">Sign in</button></div>
+      <div id="loginNotice" aria-live="polite"></div>
+    </form>
+  </div>
 
-  <section class="login-screen" id="loginScreen">
-    <div class="login-card">
-      <div class="login-icon"><i class="fa-solid fa-shield-halved"></i></div>
-      <div class="eyebrow">PRIVATE ADMIN</div>
-      <h1>Website Admin</h1>
-      <p>Sign in to manage the website.</p>
-      <form id="loginForm">
-        <label for="email">Email</label>
-        <input id="email" type="email" autocomplete="username" required placeholder="Admin email">
-        <label for="password">Password</label>
-        <input id="password" type="password" autocomplete="current-password" required placeholder="Password">
-        <button class="login-btn" id="loginBtn" type="submit">Sign in</button>
-        <div class="login-error" id="loginError" aria-live="polite"></div>
-        <div class="login-loading" id="loginLoading" aria-live="polite" hidden>Checking account...</div>
-      </form>
-    </div>
-  </section>
-
-  <div id="adminApp">
-<aside class="sidebar" id="sidebar">
-      <button class="collapse" id="collapse" aria-label="Collapse sidebar">
-        <span>‹</span>
-      </button>
-
-      <nav class="site-nav" aria-label="Main navigation">
-        <a href="https://agootson.is-a.dev/">
-          <span class="icon"><i class="fa-solid fa-house" aria-hidden="true"></i></span>
-          <span class="nav-label">Home</span>
-        </a>
-
-        <a href="https://agootson.is-a.dev/blog.html">
-          <span class="icon"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i></span>
-          <span class="nav-label">Blog</span>
-        </a>
-
-        <a href="https://agootson.is-a.dev/skills.html">
-          <span class="icon"><i class="fa-solid fa-code" aria-hidden="true"></i></span>
-          <span class="nav-label">Skills</span>
-        </a>
-
-        <a class="active" href="https://agootson.is-a.dev/gallery.html">
-          <span class="icon"><i class="fa-regular fa-images" aria-hidden="true"></i></span>
-          <span class="nav-label">Gallery</span>
-        </a>
-
-        <a href="https://agootson.is-a.dev/project.html">
-          <span class="icon"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></span>
-          <span class="nav-label">Projects</span>
-        </a>
-
-        <a href="https://agootson.is-a.dev/services.html">
-          <span class="icon"><i class="fa-solid fa-briefcase" aria-hidden="true"></i></span>
-          <span class="nav-label">Services</span>
-        </a>
-
-        <a href="https://agootson.is-a.dev/about.html">
-          <span class="icon"><i class="fa-regular fa-user" aria-hidden="true"></i></span>
-          <span class="nav-label">About Me</span>
-        </a>
-
-        <a href="https://agootson.is-a.dev/contact.html">
-          <span class="icon"><i class="fa-regular fa-paper-plane" aria-hidden="true"></i></span>
-          <span class="nav-label">Contact Me</span>
-        </a>
+  <div id="appView" class="layout hidden">
+    <aside>
+      <div class="brand">WEBSITE <span>ADGOOT</span></div>
+      <p class="muted" style="padding:0 10px">David Agootson · Admin</p>
+      <nav class="nav" id="navigation">
+        <button class="active" data-page="overview">◈ Overview</button>
+        <button data-page="articles">✎ Articles</button>
+        <button data-page="comments">☷ Gallery comments</button>
+        <button data-page="messages">✉ Contact messages</button>
+        <button data-page="subscribers">◎ Subscribers</button>
+        <button data-page="settings">⚙ Settings & tools</button>
       </nav>
+      <div class="section">
+        <button class="secondary" id="refreshButton" style="width:100%">↻ Refresh data</button>
+        <button class="secondary" id="logoutButton" style="width:100%;margin-top:8px">Sign out</button>
+      </div>
+      <p class="status">Session: <span id="sessionStatus">Checking…</span></p>
     </aside>
 
-    <button class="mobile-menu" id="mobileMenu" aria-label="Open navigation" aria-expanded="false">
-      <span></span><span></span><span></span>
-    </button>
-
-    <div class="backdrop" id="backdrop"></div>
-
-    <header class="topbar">
-      <div class="brand">
-        <div class="brand-mark"><i class="fa-solid fa-comments"></i></div>
-        <span>Website Adgoot</span>
+    <main>
+      <div class="topbar">
+        <div>
+          <p class="muted">ADMINISTRATION</p>
+          <h1 id="pageTitle">Overview</h1>
+        </div>
+        <div class="actions">
+          <input id="globalSearch" class="search" placeholder="Search loaded content…" aria-label="Search content">
+          <button class="secondary" id="exportButton">Export data</button>
+        </div>
       </div>
-      <div class="top-actions">
-        <span class="user-email" id="userEmail"></span>
-        <button class="logout" id="logoutBtn" type="button"><i class="fa-solid fa-right-from-bracket"></i> Sign out</button>
-      </div>
-    </header>
+      <div id="globalNotice" aria-live="polite"></div>
 
-    <main class="wrap">
-      <section class="hero">
-        <div class="eyebrow" id="heroEyebrow">WEBSITE ADGOOT</div>
-        <h1 id="heroTitle">Website Admin</h1>
-        <p id="heroDescription">Manage comments, messages, blog posts and newsletter subscribers.</p>
-      </section>
-
-      <div class="notice" id="notice" aria-live="polite"></div>
-
-      <div class="section-switcher" id="sectionSwitcher" aria-label="Admin sections">
-        <button class="section-btn active" data-section="comments" type="button">
-          <i class="fa-regular fa-images"></i> Gallery Comments
-        </button>
-        <button class="section-btn" data-section="contacts" type="button">
-          <i class="fa-regular fa-envelope"></i> Contact Messages
-        </button>
-        <button class="section-btn" data-section="blog" type="button">
-          <i class="fa-regular fa-pen-to-square"></i> Blog Posts
-        </button>
-        <button class="section-btn" data-section="newsletter" type="button">
-          <i class="fa-regular fa-newspaper"></i> Newsletter
-        </button>
-      </div>
-
-      <section class="stats">
-        <div class="stat"><small id="stat1Label">Total</small><strong id="totalCount">0</strong></div>
-        <div class="stat pending"><small id="stat2Label">Pending</small><strong id="pendingCount">0</strong></div>
-        <div class="stat approved"><small id="stat3Label">Approved</small><strong id="approvedCount">0</strong></div>
-        <div class="stat rejected"><small id="stat4Label">Rejected</small><strong id="rejectedCount">0</strong></div>
-      </section>
-
-      <section class="panel">
-        <div class="toolbar">
-          <div class="tabs" id="tabs">
-            <button class="tab active" data-status="pending" type="button">Pending</button>
-            <button class="tab" data-status="approved" type="button">Approved</button>
-            <button class="tab" data-status="rejected" type="button">Rejected</button>
-            <button class="tab" data-status="all" type="button">All</button>
-          </div>
-          <div class="tabs" id="contactTabs" hidden>
-            <button class="tab active" data-contact-status="new" type="button">New</button>
-            <button class="tab" data-contact-status="read" type="button">Read</button>
-            <button class="tab" data-contact-status="replied" type="button">Replied</button>
-            <button class="tab" data-contact-status="archived" type="button">Archived</button>
-            <button class="tab" data-contact-status="spam" type="button">Spam</button>
-            <button class="tab" data-contact-status="all" type="button">All</button>
-          </div>
-          <input class="search" id="search" type="search" placeholder="Search...">
+      <section id="page-overview" class="page">
+        <div class="grid">
+          <div class="card"><div class="muted">Articles</div><div class="metric" id="metricArticles">—</div><div class="status">Loaded from Supabase</div></div>
+          <div class="card"><div class="muted">Gallery comments</div><div class="metric" id="metricComments">—</div><div class="status">Loaded from Supabase</div></div>
+          <div class="card"><div class="muted">Messages</div><div class="metric" id="metricMessages">—</div><div class="status">Loaded from Supabase</div></div>
+          <div class="card"><div class="muted">Subscribers</div><div class="metric" id="metricSubscribers">—</div><div class="status">Loaded from Supabase</div></div>
         </div>
-        <div class="list" id="commentList">
-          <div class="loading">Loading...</div>
-        </div>
-        <div class="list" id="contactList" hidden>
-          <div class="loading">Loading...</div>
-        </div>
-
-      </section>
-
-      <section class="blog-admin-panel" id="blogAdminPanel" hidden>
-        <div class="blog-admin-toolbar">
-          <div>
-            <h2>Blog Posts</h2>
-            <p>Create and manage blog posts.</p>
-          </div>
-          <div class="blog-admin-controls">
-            <span class="blog-counter" id="blogCountLabel">0 articles</span>
-            <button class="btn" id="newBlogPost" type="button"><i class="fa-solid fa-plus"></i> New Article</button>
+        <div class="card">
+          <h2>Quick actions</h2>
+          <p class="muted">Publish an article or respond to a gallery comment without navigating through extra menus.</p>
+          <div class="toolbar">
+            <button id="quickNewArticle">＋ New article</button>
+            <button class="secondary" id="quickComments">Reply to comments</button>
+            <button class="secondary" id="quickMessages">Open messages</button>
           </div>
         </div>
-
-        <div class="blog-admin-toolbar" style="border-bottom:1px solid var(--line)">
-          <div class="tabs" id="blogTabs">
-            <button class="blog-tab active" data-blog-status="all" type="button">All</button>
-            <button class="blog-tab" data-blog-status="published" type="button">Published</button>
-            <button class="blog-tab" data-blog-status="draft" type="button">Drafts</button>
-            <button class="blog-tab" data-blog-status="scheduled" type="button">Scheduled</button>
-            <button class="blog-tab" data-blog-status="archived" type="button">Archived</button>
-          </div>
-          <input class="blog-admin-search" id="blogSearch" type="search"
-                 placeholder="Search..." aria-label="Search blog posts">
-        </div>
-
-        <form class="blog-editor" id="blogEditor" hidden>
-          <div class="blog-editor-head">
-            <h3 id="blogEditorTitle">New Article</h3>
-            <span class="blog-counter" id="blogSlugPreview">Slug will be generated</span>
-          </div>
-
-          <input type="hidden" id="blogEditId">
-
-          <div class="blog-editor-grid">
-            <div class="blog-field full">
-              <label for="blogTitle">Title *</label>
-              <input id="blogTitle" required maxlength="180" placeholder="Article title">
-            </div>
-
-            <div class="blog-field">
-              <label for="blogCategory">Category *</label>
-              <input id="blogCategory" required maxlength="50" placeholder="Technology">
-            </div>
-
-            <div class="blog-field">
-              <label for="blogTags">Tags (comma separated)</label>
-              <input id="blogTags" maxlength="180" placeholder="JavaScript, Learning">
-            </div>
-
-            <div class="blog-field">
-              <label for="blogExcerpt">Excerpt *</label>
-              <textarea id="blogExcerpt" required maxlength="300" placeholder="Short description"></textarea>
-            </div>
-
-            <div class="blog-field">
-              <label for="blogCover">Cover image URL (optional)</label>
-              <input id="blogCover" maxlength="500" placeholder="images/cover.jpg">
-            </div>
-
-            <div class="blog-field full">
-              <label for="blogContent">Article content *</label>
-              <textarea class="content" id="blogContent" required placeholder="<p>Write your article...</p>"></textarea>
-              <div class="blog-help">HTML is supported.</div>
-            </div>
-
-            <div class="blog-field">
-              <label for="blogStatus">Status *</label>
-              <select id="blogStatus">
-                <option value="published">Published</option>
-                <option value="draft">Draft</option>
-                <option value="scheduled">Scheduled</option>
-                <option value="archived">Archived</option>
-              </select>
-            </div>
-
-            <div class="blog-field">
-              <label for="blogDate">Date</label>
-              <input id="blogDate" type="datetime-local">
-            </div>
-          </div>
-
-          <div class="blog-editor-actions">
-            <button class="btn" type="submit" id="saveBlogPost"><i class="fa-solid fa-cloud-arrow-up"></i> Save Article</button>
-            <button class="btn secondary" type="button" id="cancelBlogEdit">Cancel</button>
-            <button class="btn secondary" type="button" id="importBlogStarters">Import Articles</button>
-          </div>
-          <p class="form-status" id="blogEditorStatus"></p>
-        </form>
-
-        <div class="blog-admin-list" id="blogPostList">
-          <div class="loading">Loading blog posts...</div>
+        <div class="card section">
+          <h2>Publishing checklist</h2>
+          <p>1. Open Articles and create your post.</p>
+          <p>2. Select <b>Publish Now</b> to save it as published immediately.</p>
+          <p>3. Ensure your public blog page queries published records from the same Supabase table.</p>
+          <p>4. Open Gallery comments to post admin replies to visitors.</p>
         </div>
       </section>
 
-      <section class="newsletter-admin-panel" id="newsletterAdminPanel" hidden>
-        <div class="newsletter-admin-toolbar">
-          <div>
-            <h2>Newsletter Subscribers</h2>
-            <p>Manage newsletter subscribers.</p>
+      <section id="page-articles" class="page hidden">
+        <div class="card">
+          <div class="section-head">
+            <div><h2 id="articleFormTitle">Write an article</h2><p class="muted">Publish immediately or save a draft.</p></div>
+            <button class="secondary" id="newArticleButton">＋ New article</button>
           </div>
-          <div class="newsletter-admin-controls">
-            <span class="blog-counter" id="newsletterCountLabel">0 subscribers</span>
-            <button class="btn secondary" id="refreshNewsletter" type="button">
-              <i class="fa-solid fa-rotate"></i> Refresh
-            </button>
-            <button class="btn" id="exportNewsletter" type="button">
-              <i class="fa-solid fa-file-csv"></i> Export CSV
-            </button>
+          <form id="articleForm">
+            <input type="hidden" id="articleId">
+            <div class="form-grid">
+              <div class="full"><label for="articleTitle">Title *</label><input id="articleTitle" required maxlength="200" placeholder="Article title"></div>
+              <div><label for="articleSlug">URL slug</label><input id="articleSlug" placeholder="my-new-article"></div>
+              <div><label for="articleCategory">Category</label><input id="articleCategory" placeholder="Technology, Blog…"></div>
+              <div class="full"><label for="articleExcerpt">Excerpt</label><textarea id="articleExcerpt" style="min-height:75px" placeholder="A short summary for the blog listing"></textarea></div>
+              <div class="full"><label for="articleContent">Article content *</label><textarea id="articleContent" required style="min-height:300px" placeholder="Write your article here…"></textarea></div>
+              <div><label for="articleImage">Featured image URL (optional)</label><input id="articleImage" type="url" placeholder="https://…"></div>
+              <div><label for="articleStatus">Status</label><select id="articleStatus"><option value="published">Publish Now</option><option value="draft">Save as Draft</option></select></div>
+            </div>
+            <div class="toolbar">
+              <button type="submit" id="publishButton">Publish Now</button>
+              <button type="button" class="secondary" id="saveDraftButton">Save Draft</button>
+              <button type="button" class="secondary" id="clearArticleButton">Clear form</button>
+            </div>
+            <p class="status">The article is saved to your configured Supabase table. Public visibility depends on your blog page and database policies.</p>
+          </form>
+        </div>
+        <div class="section">
+          <div class="section-head"><h2>Existing articles</h2><button class="secondary" id="reloadArticlesButton">Reload articles</button></div>
+          <div id="articlesList"><div class="empty">Loading articles…</div></div>
+        </div>
+      </section>
+
+      <section id="page-comments" class="page hidden">
+        <div class="card">
+          <h2>Gallery comment moderation</h2>
+          <p class="muted">Approve comments and reply as the site administrator.</p>
+          <div class="toolbar">
+            <select id="commentFilter" style="max-width:220px">
+              <option value="all">All comments</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+            <button class="secondary" id="reloadCommentsButton">Reload comments</button>
           </div>
+          <div id="commentsList"><div class="empty">Loading comments…</div></div>
         </div>
+      </section>
 
-        <div class="newsletter-admin-toolbar" style="border-bottom:1px solid var(--line)">
-          <div class="newsletter-tabs" id="newsletterTabs">
-            <button class="newsletter-tab active" data-newsletter-status="all" type="button">All</button>
-            <button class="newsletter-tab" data-newsletter-status="active" type="button">Active</button>
-            <button class="newsletter-tab" data-newsletter-status="unsubscribed" type="button">Unsubscribed</button>
+      <section id="page-messages" class="page hidden">
+        <div class="card">
+          <h2>Contact messages</h2>
+          <div class="toolbar">
+            <select id="messageFilter" style="max-width:220px">
+              <option value="all">All messages</option>
+              <option value="new">New</option>
+              <option value="read">Read</option>
+              <option value="replied">Replied</option>
+            </select>
+            <button class="secondary" id="reloadMessagesButton">Reload messages</button>
           </div>
-          <input class="newsletter-search" id="newsletterSearch" type="search"
-                 placeholder="Search..." aria-label="Search newsletter subscribers">
+          <div id="messagesList"><div class="empty">Loading messages…</div></div>
         </div>
+      </section>
 
-        <div class="newsletter-list" id="newsletterList">
-          <div class="loading">Loading newsletter subscribers...</div>
+      <section id="page-subscribers" class="page hidden">
+        <div class="card">
+          <div class="section-head"><h2>Newsletter subscribers</h2><button class="secondary" id="exportSubscribersButton">Export CSV</button></div>
+          <div id="subscribersList"><div class="empty">Loading subscribers…</div></div>
         </div>
+      </section>
 
-        <div class="newsletter-note">
-          Subscriber emails are only available to the admin.
-          Newsletter sending will be added later.
+      <section id="page-settings" class="page hidden">
+        <div class="grid">
+          <div class="card"><h3>Session</h3><p class="muted">The dashboard signs out locally after five minutes of inactivity. Configure stronger session controls in Supabase Auth for server-side protection.</p><button class="secondary" id="forceLogoutButton">Sign out now</button></div>
+          <div class="card"><h3>Data export</h3><p class="muted">Export records currently loaded into this browser.</p><button id="settingsExportButton">Download JSON backup</button></div>
+          <div class="card"><h3>Keyboard shortcut</h3><p class="muted">Use Ctrl/⌘ + K to focus global search.</p><button class="secondary" id="focusSearchButton">Focus search</button></div>
+          <div class="card"><h3>Admin safety</h3><p class="muted">Use a dedicated admin account and restrictive row-level security policies. Never put a service-role key in this HTML.</p></div>
         </div>
       </section>
     </main>
-<footer class="site-footer">
-     <div class="socials">
-        <a href="https://www.linkedin.com/in/agootson" target="_blank" rel="noopener" aria-label="LinkedIn" title="LinkedIn"><i class="fa-brands fa-linkedin-in" aria-hidden="true"></i></a>
-        <a href="https://www.threads.net/@agootson" target="_blank" rel="noopener" aria-label="Threads" title="Threads"><i class="fa-brands fa-threads" aria-hidden="true"></i></a>
-        <a href="https://www.facebook.com/agootson" target="_blank" rel="noopener" aria-label="Facebook" title="Facebook"><i class="fa-brands fa-facebook-f" aria-hidden="true"></i></a>
-        <a href="https://x.com/agootson" target="_blank" rel="noopener" aria-label="X" title="X"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i></a>
-        <a href="https://www.instagram.com/agootson" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram"><i class="fa-brands fa-instagram" aria-hidden="true"></i></a>
-        <a href="https://www.youtube.com/@agootson" target="_blank" rel="noopener" aria-label="YouTube" title="YouTube"><i class="fa-brands fa-youtube" aria-hidden="true"></i></a>
-        <a href="https://www.reddit.com/user/hereoutsidethebox/" target="_blank" rel="noopener" aria-label="Reddit u/hereoutsidethebox" title="Reddit - u/hereoutsidethebox"><i class="fa-brands fa-reddit-alien" aria-hidden="true"></i></a>
-      </div>
-
-      <p class="copyright">© <span id="year"></span> David Agootson. All rights reserved.</p>
-    </footer>
   </div>
+  <div id="toast" class="toast"></div>
 
-  <div class="reply-modal" id="replyModal" hidden aria-hidden="true">
-    <div class="reply-card" role="dialog" aria-modal="true" aria-labelledby="replyTitle">
-      <div class="reply-head">
-        <div>
-          <h2 id="replyTitle">Reply</h2>
-          <p id="replyRecipient"></p>
+<script>
+(() => {
+  "use strict";
+
+  // This is the Supabase publishable/anon key. Never put a service-role key in client HTML.
+  const SUPABASE_URL = "https://jxfrevwvpyxbljfkrhyo.supabase.co";
+  const SUPABASE_KEY = "YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY";
+
+  // IMPORTANT: align these names and fields with your existing database schema.
+  const TABLES = {
+    articles: "blog_posts",
+    comments: "comments",
+    replies: "comment_replies",
+    messages: "contact_messages",
+    subscribers: "newsletter_subscribers"
+  };
+
+  const $ = id => document.getElementById(id);
+  const state = {
+    client: null, user: null, articles: [], comments: [],
+    replies: [], messages: [], subscribers: [], sessionTimer: null
+  };
+
+  function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, ch => ({
+      "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+    })[ch]);
+  }
+
+  function notify(message, type = "") {
+    $("toast").innerHTML = `<div class="card ${type}" role="status">${escapeHtml(message)}</div>`;
+    window.setTimeout(() => { $("toast").innerHTML = ""; }, 4500);
+  }
+
+  function setNotice(id, message, type = "") {
+    $(id).innerHTML = message ? `<div class="notice ${type}">${escapeHtml(message)}</div>` : "";
+  }
+
+  function hasConfig() {
+    return SUPABASE_KEY && !SUPABASE_KEY.includes("YOUR_SUPABASE");
+  }
+
+  function slugify(value) {
+    return value.toLowerCase().trim().normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  }
+
+  function firstValue(row, keys, fallback = "") {
+    for (const key of keys) if (row && row[key] != null) return row[key];
+    return fallback;
+  }
+
+  function articleStatus(row) {
+    return firstValue(row, ["status", "publication_status"], row.published_at ? "published" : "draft");
+  }
+
+  function isPublished(row) {
+    return ["published", "published_at"].includes(String(articleStatus(row)).toLowerCase()) ||
+      Boolean(row.published === true);
+  }
+
+  async function queryTable(table, orderColumn = "created_at") {
+    const { data, error } = await state.client.from(table).select("*").order(orderColumn, { ascending: false });
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function safeLoad(table, orderColumn) {
+    try { return await queryTable(table, orderColumn); }
+    catch (error) {
+      console.warn(`Could not load ${table}:`, error.message);
+      return [];
+    }
+  }
+
+  function navigate(page) {
+    document.querySelectorAll(".page").forEach(el => el.classList.add("hidden"));
+    $("page-" + page)?.classList.remove("hidden");
+    document.querySelectorAll("#navigation button").forEach(btn => btn.classList.toggle("active", btn.dataset.page === page));
+    const titles = { overview: "Overview", articles: "Articles", comments: "Gallery comments", messages: "Contact messages", subscribers: "Subscribers", settings: "Settings & tools" };
+    $("pageTitle").textContent = titles[page] || "Admin";
+  }
+
+  async function refreshAll() {
+    if (!state.client) return;
+    $("sessionStatus").textContent = "Refreshing…";
+    const [articles, comments, messages, subscribers, replies] = await Promise.all([
+      safeLoad(TABLES.articles, "created_at"),
+      safeLoad(TABLES.comments, "created_at"),
+      safeLoad(TABLES.messages, "created_at"),
+      safeLoad(TABLES.subscribers, "created_at"),
+      safeLoad(TABLES.replies, "created_at")
+    ]);
+    state.articles = articles;
+    state.comments = comments;
+    state.messages = messages;
+    state.subscribers = subscribers;
+    state.replies = replies;
+    renderAll();
+    $("sessionStatus").textContent = "Signed in";
+  }
+
+  function renderAll() {
+    $("metricArticles").textContent = state.articles.length;
+    $("metricComments").textContent = state.comments.length;
+    $("metricMessages").textContent = state.messages.length;
+    $("metricSubscribers").textContent = state.subscribers.length;
+    renderArticles();
+    renderComments();
+    renderMessages();
+    renderSubscribers();
+  }
+
+  function matchesSearch(row) {
+    const q = $("globalSearch").value.trim().toLowerCase();
+    return !q || JSON.stringify(row).toLowerCase().includes(q);
+  }
+
+  function renderArticles() {
+    const rows = state.articles.filter(matchesSearch);
+    if (!rows.length) {
+      $("articlesList").innerHTML = '<div class="empty">No articles loaded. Create your first article above.</div>';
+      return;
+    }
+    $("articlesList").innerHTML = rows.map(row => {
+      const title = firstValue(row, ["title", "name"], "Untitled");
+      const status = articleStatus(row);
+      return `<article class="item">
+        <div class="item-head"><div><h3>${escapeHtml(title)}</h3><span class="pill ${String(status).toLowerCase() === "published" ? "green" : ""}">${escapeHtml(status)}</span></div>
+        <div class="actions"><button class="secondary" data-edit-article="${escapeHtml(row.id)}">Edit</button>
+        ${String(status).toLowerCase() === "published" ? "" : `<button data-publish-article="${escapeHtml(row.id)}">Publish</button>`}
+        <button class="danger" data-delete-article="${escapeHtml(row.id)}">Delete</button></div></div>
+        <p class="muted">${escapeHtml(firstValue(row, ["excerpt", "summary"], ""))}</p>
+      </article>`;
+    }).join("");
+  }
+
+  function renderComments() {
+    const filter = $("commentFilter").value;
+    const rows = state.comments.filter(row => matchesSearch(row) &&
+      (filter === "all" || String(firstValue(row, ["status"], "pending")).toLowerCase() === filter));
+    if (!rows.length) {
+      $("commentsList").innerHTML = '<div class="empty">No comments match this filter.</div>';
+      return;
+    }
+    $("commentsList").innerHTML = rows.map(row => {
+      const id = row.id;
+      const status = String(firstValue(row, ["status"], "pending")).toLowerCase();
+      const reply = state.replies.find(r => String(r.comment_id) === String(id));
+      const author = firstValue(row, ["name", "author_name", "username"], "Visitor");
+      const body = firstValue(row, ["comment", "content", "message", "text"], "");
+      return `<article class="item">
+        <div class="item-head"><div><h3>${escapeHtml(author)}</h3><span class="pill ${status === "approved" ? "green" : status === "rejected" ? "red" : ""}">${escapeHtml(status)}</span></div>
+        <div class="actions">
+          ${status !== "approved" ? `<button data-comment-status="approved" data-comment-id="${escapeHtml(id)}">Approve</button>` : ""}
+          ${status !== "rejected" ? `<button class="secondary" data-comment-status="rejected" data-comment-id="${escapeHtml(id)}">Reject</button>` : ""}
+          <button data-reply-id="${escapeHtml(id)}">Reply as Admin</button>
+        </div></div>
+        <p>${escapeHtml(body)}</p>
+        ${reply ? `<div class="reply-box"><b>David Agootson · Admin reply</b><p>${escapeHtml(reply.reply)}</p><button class="secondary" data-reply-id="${escapeHtml(id)}">Edit reply</button></div>` : ""}
+        <div class="reply-box hidden" id="reply-box-${escapeHtml(id)}">
+          <label for="reply-text-${escapeHtml(id)}">Your public reply</label>
+          <textarea id="reply-text-${escapeHtml(id)}" placeholder="Write a respectful reply…">${escapeHtml(reply?.reply || "")}</textarea>
+          <div class="toolbar"><button data-save-reply="${escapeHtml(id)}">Save reply</button><button class="secondary" data-cancel-reply="${escapeHtml(id)}">Cancel</button></div>
         </div>
-        <button class="reply-close" id="replyClose" type="button" aria-label="Close reply composer">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-      <form id="replyForm">
-        <div class="reply-body">
-          <div class="reply-field">
-            <label for="replyTo">To</label>
-            <input id="replyTo" type="email" readonly>
-          </div>
-          <div class="reply-field">
-            <label for="replySubject">Subject</label>
-            <input id="replySubject" type="text" maxlength="180" required>
-          </div>
-          <div class="reply-field">
-            <label>Original message</label>
-            <div class="reply-original" id="replyOriginal"></div>
-          </div>
-          <div class="reply-field">
-            <label for="replyMessage">Your reply</label>
-            <textarea id="replyMessage" maxlength="5000" required placeholder="Write your reply..."></textarea>
-          </div>
-        </div>
-        <p class="reply-status" id="replyStatus" aria-live="polite"></p>
-        <div class="reply-actions">
-          <button class="btn secondary" id="replyCancel" type="button">Cancel</button>
-          <button class="btn" id="replySend" type="submit">
-            <i class="fa-solid fa-paper-plane"></i> Send Reply
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
+      </article>`;
+    }).join("");
+  }
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    const SUPABASE_URL = "https://jxfrevwvpyxbljfkrhyo.supabase.co";
-    const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_dEtGqJaPQmhdgiGgkMwQRw_LI6Itzwo";
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-
-    const loginScreen = document.getElementById("loginScreen");
-    const adminApp = document.getElementById("adminApp");
-    const loginForm = document.getElementById("loginForm");
-    const loginBtn = document.getElementById("loginBtn");
-    const loginError = document.getElementById("loginError");
-    const loginLoading = document.getElementById("loginLoading");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const userEmail = document.getElementById("userEmail");
-    const commentList = document.getElementById("commentList");
-    const contactList = document.getElementById("contactList");
-    const search = document.getElementById("search");
-    const tabs = document.getElementById("tabs");
-    const contactTabs = document.getElementById("contactTabs");
-    const sectionSwitcher = document.getElementById("sectionSwitcher");
-    const notice = document.getElementById("notice");
-    const moderationPanel = document.querySelector("#adminApp .panel");
-    const blogAdminPanel = document.getElementById("blogAdminPanel");
-    const blogEditor = document.getElementById("blogEditor");
-    const blogPostList = document.getElementById("blogPostList");
-    const blogTabs = document.getElementById("blogTabs");
-    const blogSearch = document.getElementById("blogSearch");
-    const newsletterAdminPanel = document.getElementById("newsletterAdminPanel");
-    const newsletterList = document.getElementById("newsletterList");
-    const newsletterTabs = document.getElementById("newsletterTabs");
-    const newsletterSearch = document.getElementById("newsletterSearch");
-
-    let comments = [];
-    let contacts = [];
-    let newsletterSubscribers = [];
-    let activeStatus = "pending";
-    let activeContactStatus = "new";
-    let activeSection = "comments";
-    let activeBlogStatus = "all";
-    let activeNewsletterStatus = "all";
-    let blogPosts = [];
-    let photoMap = new Map();
-    let currentBlogUser = null;
-    let replyContact = null;
-    const replyModal = document.getElementById("replyModal");
-    const replyForm = document.getElementById("replyForm");
-    const replyTo = document.getElementById("replyTo");
-    const replySubject = document.getElementById("replySubject");
-    const replyOriginal = document.getElementById("replyOriginal");
-    const replyMessage = document.getElementById("replyMessage");
-    const replyStatus = document.getElementById("replyStatus");
-    const replySend = document.getElementById("replySend");
-
-
-
-    const blogStarterPosts = [
-      {
-        title:"Learning Web Development by Building Real Things",
-        slug:"web-development-real-things",
-        category:"Web Development",
-        tags:["Web Development","Learning"],
-        excerpt:"A practical look at how building websites turns HTML, CSS, JavaScript and responsive design concepts into real experience.",
-        content:`<p>Building real websites has taught me that web development becomes much easier to understand when theory is connected to something people can actually use.</p>
-<h3>Start with a small, complete project</h3><p>A small website forces you to think about structure, styling, interaction, responsiveness and deployment at the same time.</p>
-<h3>Learn by improving</h3><p>Instead of trying to master everything first, build, test, identify a weakness and improve it. Each iteration becomes another lesson.</p>
-<blockquote>Real projects turn individual concepts into practical experience.</blockquote>`,
-        published_at:"2026-09-10T09:00:00"
-      },
-      {
-        title:"What Python Teaches Beyond Syntax",
-        slug:"python-beyond-syntax",
-        category:"Programming",
-        tags:["Python","Programming"],
-        excerpt:"Lessons from Python practice, exception handling, database operations and solving problems with code.",
-        content:`<p>Programming is not only about remembering syntax. Python makes it easier to focus on logic, data and the decisions a program needs to make.</p>
-<h3>Errors are part of the process</h3><p>Exception handling teaches us to expect failure and design programs that respond to it clearly.</p>
-<h3>Code should solve a problem</h3><p>Whether the task involves a database, data analysis or automation, the important skill is translating a problem into a sequence of reliable steps.</p>`,
-        published_at:"2026-09-07T09:00:00"
-      },
-      {
-        title:"Understanding Data Through Analysis",
-        slug:"understanding-data-analysis",
-        category:"Data",
-        tags:["Data","Analysis"],
-        excerpt:"A beginner-friendly exploration of measurement scales and univariate, bivariate and multivariate analysis.",
-        content:`<p>Data analysis becomes clearer when we understand what kind of data we have and what question we are trying to answer.</p>
-<h3>Choose the right perspective</h3><p>Univariate analysis focuses on one variable, bivariate analysis studies relationships between two variables, and multivariate analysis considers several variables together.</p>
-<p>Good analysis begins before the calculation: define the question, understand the data and select an appropriate method.</p>`,
-        published_at:"2026-09-03T09:00:00"
-      },
-      {
-        title:"From Hardware to Software: What Microprocessors Teach Me",
-        slug:"microprocessors-hardware",
-        category:"Computer Science",
-        tags:["Microprocessors","CSE"],
-        excerpt:"Reflections from studying microprocessors and understanding the hardware foundations behind computing.",
-        content:`<p>Studying microprocessors makes the connection between hardware instructions and software behavior much easier to appreciate.</p>
-<h3>Instructions become actions</h3><p>Registers, the ALU, control logic and memory interactions provide the foundation on which software ultimately runs.</p>
-<p>Understanding this layer helps explain why programs behave the way they do.</p>`,
-        published_at:"2026-08-29T09:00:00"
-      },
-      {
-        title:"Making Sense of Compiler Design",
-        slug:"compiler-design",
-        category:"Theory",
-        tags:["Compiler Design","Theory"],
-        excerpt:"A practical introduction to grammar, parsing and the stages that turn source code into executable programs.",
-        content:`<p>Compiler design brings together formal languages, parsing, syntax trees and translation.</p>
-<h3>From source to structure</h3><p>A compiler first analyzes the source program and checks whether it follows the rules of its language.</p>
-<p>Learning grammars and parsing makes the hidden structure of programming languages much more visible.</p>`,
-        published_at:"2026-08-25T09:00:00"
-      },
-      {
-        title:"My Journey as a Student Builder",
-        slug:"student-builder-journey",
-        category:"Personal",
-        tags:["Student","Projects","Learning"],
-        excerpt:"Lessons from building websites and software while learning Computer Science as a student.",
-        content:`<p>Building while learning has changed how I approach Computer Science. Projects turn abstract concepts into decisions that have to work in the real world.</p>
-<h3>Build, test, improve</h3><p>Every project exposes something new to learn, from debugging and design to deployment and user experience.</p>
-<p>The goal is not to know everything before starting. The goal is to keep building and improving.</p>`,
-        published_at:"2026-08-20T09:00:00"
-      }
-    ];
-
-    const blogEsc = value => String(value ?? "").replace(/[&<>"']/g, c => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-    }[c]));
-
-    const blogSlugify = value => String(value || "").toLowerCase().trim()
-      .replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,80);
-
-    function blogDateValue(value) {
-      if (!value) return "";
-      const d = new Date(value);
-      if (Number.isNaN(d.getTime())) return "";
-      const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
-      return local.toISOString().slice(0,16);
+  function renderMessages() {
+    const filter = $("messageFilter").value;
+    const rows = state.messages.filter(row => matchesSearch(row) &&
+      (filter === "all" || String(firstValue(row, ["status"], "new")).toLowerCase() === filter));
+    if (!rows.length) {
+      $("messagesList").innerHTML = '<div class="empty">No messages match this filter.</div>';
+      return;
     }
+    $("messagesList").innerHTML = rows.map(row => `<article class="item">
+      <div class="item-head"><div><h3>${escapeHtml(firstValue(row, ["name", "sender_name"], "Visitor"))}</h3>
+      <p class="muted">${escapeHtml(firstValue(row, ["email"], ""))}</p></div>
+      <span class="pill">${escapeHtml(firstValue(row, ["status"], "new"))}</span></div>
+      <p>${escapeHtml(firstValue(row, ["message", "content", "body"], ""))}</p>
+      <div class="toolbar"><button class="secondary" data-message-read="${escapeHtml(row.id)}">Mark read</button>
+      <button data-message-reply="${escapeHtml(row.id)}">Reply by email</button></div>
+    </article>`).join("");
+  }
 
-    function blogStatusLabel(status) {
-      return status === "published" ? "Published"
-        : status === "scheduled" ? "Scheduled"
-        : status === "archived" ? "Archived"
-        : "Draft";
-    }
+  function renderSubscribers() {
+    const rows = state.subscribers.filter(matchesSearch);
+    $("subscribersList").innerHTML = rows.length ? rows.map(row => `<article class="item">
+      <b>${escapeHtml(firstValue(row, ["email"], "No email"))}</b>
+      <p class="muted">${escapeHtml(firstValue(row, ["status"], "subscribed"))}</p>
+    </article>`).join("") : '<div class="empty">No subscribers loaded.</div>';
+  }
 
-    function filteredBlogPosts() {
-      const query = blogSearch.value.trim().toLowerCase();
-      return blogPosts.filter(post => {
-        const statusMatch = activeBlogStatus === "all" || post.status === activeBlogStatus;
-        const haystack = [
-          post.title, post.category, post.excerpt, post.content,
-          ...(Array.isArray(post.tags) ? post.tags : [])
-        ].join(" ").toLowerCase();
-        return statusMatch && (!query || haystack.includes(query));
-      });
-    }
+  function resetArticleForm() {
+    $("articleForm").reset();
+    $("articleId").value = "";
+    $("articleStatus").value = "published";
+    $("articleFormTitle").textContent = "Write an article";
+    $("publishButton").textContent = "Publish Now";
+  }
 
-    function updateBlogStats() {
-      const total = blogPosts.length;
-      const published = blogPosts.filter(p => p.status === "published").length;
-      const drafts = blogPosts.filter(p => p.status === "draft").length;
-      const scheduled = blogPosts.filter(p => p.status === "scheduled").length;
+  function fillArticleForm(row) {
+    $("articleId").value = row.id || "";
+    $("articleTitle").value = firstValue(row, ["title", "name"], "");
+    $("articleSlug").value = firstValue(row, ["slug"], "");
+    $("articleCategory").value = firstValue(row, ["category"], "");
+    $("articleExcerpt").value = firstValue(row, ["excerpt", "summary"], "");
+    $("articleContent").value = firstValue(row, ["content", "body", "html"], "");
+    $("articleImage").value = firstValue(row, ["featured_image", "image_url", "cover_image"], "");
+    $("articleStatus").value = isPublished(row) ? "published" : "draft";
+    $("articleFormTitle").textContent = "Edit article";
+    $("publishButton").textContent = "Save and Publish";
+    navigate("articles");
+    $("articleTitle").focus();
+  }
 
-      document.getElementById("stat1Label").textContent = "Total";
-      document.getElementById("stat2Label").textContent = "Published";
-      document.getElementById("stat3Label").textContent = "Drafts";
-      document.getElementById("stat4Label").textContent = "Scheduled";
-      document.getElementById("totalCount").textContent = total;
-      document.getElementById("pendingCount").textContent = published;
-      document.getElementById("approvedCount").textContent = drafts;
-      document.getElementById("rejectedCount").textContent = scheduled;
-      document.getElementById("blogCountLabel").textContent =
-        `${total} article${total === 1 ? "" : "s"}`;
-    }
+  // Change this payload if your blog_posts table uses different column names.
+  function buildArticlePayload(status) {
+    const title = $("articleTitle").value.trim();
+    const content = $("articleContent").value.trim();
+    if (!title || !content) throw new Error("Title and article content are required.");
+    const slug = $("articleSlug").value.trim() || slugify(title);
+    const published = status === "published";
+    return {
+      title,
+      slug,
+      category: $("articleCategory").value.trim() || null,
+      excerpt: $("articleExcerpt").value.trim() || null,
+      content,
+      featured_image: $("articleImage").value.trim() || null,
+      status,
+      published,
+      published_at: published ? new Date().toISOString() : null
+    };
+  }
 
-    async function loadBlogPosts() {
-      blogPostList.innerHTML = '<div class="loading">Loading blog posts...</div>';
-
-      const { data, error } = await supabaseClient
-        .from("blog_posts")
-        .select("id,title,slug,excerpt,content,cover_image,category,tags,status,published_at,scheduled_at,author_id,created_at")
-        .order("created_at", { ascending:false });
-
-      if (error) {
-        console.error(error);
-        blogPosts = [];
-        blogPostList.innerHTML =
-          '<div class="blog-empty">Could not load blog posts. Check the blog_posts table and its admin RLS policies.</div>';
-        updateBlogStats();
-        return;
-      }
-
-      blogPosts = data || [];
-      updateBlogStats();
-      renderBlogPosts();
-    }
-
-    function renderBlogPosts() {
-      const items = filteredBlogPosts();
-      blogPostList.replaceChildren();
-
-      if (!items.length) {
-        const empty = document.createElement("div");
-        empty.className = "blog-empty";
-        empty.textContent = blogPosts.length
-          ? "No articles match this view."
-          : "No articles yet. Click “New Article” to publish your first article.";
-        blogPostList.appendChild(empty);
-        return;
-      }
-
-      items.forEach(post => {
-        const row = document.createElement("article");
-        row.className = "blog-post-row";
-
-        const body = document.createElement("div");
-        const title = document.createElement("div");
-        title.className = "blog-post-title";
-        title.textContent = post.title || "(Untitled)";
-
-        const meta = document.createElement("div");
-        meta.className = "blog-post-meta";
-
-        const status = document.createElement("span");
-        status.className = `blog-status ${post.status || "draft"}`;
-        status.textContent = blogStatusLabel(post.status);
-
-        const category = document.createElement("span");
-        category.textContent = post.category || "Uncategorized";
-
-        const date = document.createElement("span");
-        const dateSource = post.status === "scheduled"
-          ? post.scheduled_at
-          : post.published_at || post.created_at;
-        date.textContent = formatDate(dateSource);
-
-        meta.append(status, category, date);
-        body.append(title, meta);
-
-        const actions = document.createElement("div");
-        actions.className = "blog-row-actions";
-
-        const edit = document.createElement("button");
-        edit.type = "button";
-        edit.dataset.blogEdit = post.id;
-        edit.innerHTML = '<i class="fa-solid fa-pen"></i> Edit';
-
-        const preview = document.createElement("button");
-        preview.type = "button";
-        preview.dataset.blogPreview = post.slug;
-        preview.innerHTML = '<i class="fa-solid fa-eye"></i> Preview';
-
-        const remove = document.createElement("button");
-        remove.type = "button";
-        remove.className = "danger";
-        remove.dataset.blogDelete = post.id;
-        remove.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
-
-        actions.append(edit, preview, remove);
-        row.append(body, actions);
-        blogPostList.appendChild(row);
-      });
-    }
-
-    function resetBlogEditor() {
-      blogEditor.reset();
-      document.getElementById("blogEditId").value = "";
-      document.getElementById("blogEditorTitle").textContent = "New Article";
-      document.getElementById("blogStatus").value = "published";
-      document.getElementById("blogDate").value =
-        blogDateValue(new Date(Date.now() + 5 * 60 * 1000));
-      document.getElementById("blogSlugPreview").textContent = "Slug will be generated";
-      document.getElementById("blogEditorStatus").textContent = "";
-      blogEditor.hidden = false;
-      document.getElementById("blogTitle").focus();
-    }
-
-    function loadBlogEditor(post) {
-      document.getElementById("blogEditId").value = post.id || "";
-      document.getElementById("blogTitle").value = post.title || "";
-      document.getElementById("blogCategory").value = post.category || "";
-      document.getElementById("blogTags").value =
-        Array.isArray(post.tags) ? post.tags.join(", ") : "";
-      document.getElementById("blogExcerpt").value = post.excerpt || "";
-      document.getElementById("blogCover").value = post.cover_image || "";
-      document.getElementById("blogContent").value = post.content || "";
-      document.getElementById("blogStatus").value = post.status || "draft";
-      document.getElementById("blogDate").value =
-        blogDateValue(post.scheduled_at || post.published_at || post.created_at);
-      document.getElementById("blogEditorTitle").textContent = "Edit Article";
-      document.getElementById("blogSlugPreview").textContent =
-        `Slug: ${post.slug || blogSlugify(post.title)}`;
-      document.getElementById("blogEditorStatus").textContent = "";
-      blogEditor.hidden = false;
-      blogEditor.scrollIntoView({ behavior:"smooth", block:"start" });
-    }
-
-    async function saveBlogPost(event) {
-      event.preventDefault();
-
-      const title = document.getElementById("blogTitle").value.trim();
-      const category = document.getElementById("blogCategory").value.trim();
-      const tags = document.getElementById("blogTags").value
-        .split(",").map(tag => tag.trim()).filter(Boolean);
-      const excerpt = document.getElementById("blogExcerpt").value.trim();
-      const cover_image = document.getElementById("blogCover").value.trim() || null;
-      const content = document.getElementById("blogContent").value.trim();
-      const status = document.getElementById("blogStatus").value;
-      const dateValue = document.getElementById("blogDate").value;
-      const editId = document.getElementById("blogEditId").value;
-
-      if (!title || !category || !excerpt || !content) {
-        showNotice("Complete the required Blog fields before saving.", "error");
-        return;
-      }
-
-      const slugBase = blogSlugify(title);
-      if (!slugBase) {
-        showNotice("The article title must contain letters or numbers.", "error");
-        return;
-      }
-
-      let slug = slugBase;
-      if (!editId) {
-        slug = `${slugBase}-${Date.now().toString(36)}`;
-      }
-
-      if (status === "scheduled" && !dateValue) {
-        showNotice("Choose a schedule date for a scheduled article.", "error");
-        return;
-      }
-
-      let dateIso = null;
-      if (dateValue) {
-        const parsed = new Date(dateValue);
-        if (Number.isNaN(parsed.getTime())) {
-          showNotice("The publication/schedule date is invalid.", "error");
-          return;
-        }
-        dateIso = parsed.toISOString();
-      }
-
-      const { data:{ user } } = await supabaseClient.auth.getUser();
-      currentBlogUser = user || currentBlogUser;
-
-      const payload = {
-        title,
-        slug,
-        excerpt,
-        content,
-        cover_image,
-        category,
-        tags,
-        status,
-        published_at: status === "published" ? (dateIso || new Date().toISOString()) : null,
-        scheduled_at: status === "scheduled" ? dateIso : null,
-        author_id: currentBlogUser?.id || null
-      };
-
-      if (editId) {
-        const existing = blogPosts.find(post => post.id === editId);
-        if (existing) {
-          payload.slug = existing.slug;
-          payload.author_id = existing.author_id || currentBlogUser?.id || null;
-        }
-      }
-
-      const saveButton = document.getElementById("saveBlogPost");
-      saveButton.disabled = true;
-      setStatus(document.getElementById("blogEditorStatus"), "Saving article to Supabase...");
-
+  async function saveArticle(status) {
+    if (!state.client) throw new Error("Supabase is not configured.");
+    const id = $("articleId").value;
+    const payload = buildArticlePayload(status);
+    const button = status === "published" ? $("publishButton") : $("saveDraftButton");
+    button.disabled = true;
+    button.textContent = status === "published" ? "Publishing…" : "Saving…";
+    try {
       let result;
-      if (editId) {
-        result = await supabaseClient
-          .from("blog_posts")
-          .update(payload)
-          .eq("id", editId)
-          .select()
-          .single();
-      } else {
-        result = await supabaseClient
-          .from("blog_posts")
-          .insert(payload)
-          .select()
-          .single();
-      }
-
-      saveButton.disabled = false;
-
-      if (result.error) {
-        console.error(result.error);
-        setStatus(
-          document.getElementById("blogEditorStatus"),
-          result.error.message || "Unable to save the article.",
-          "error"
-        );
-        return;
-      }
-
-      const message = status === "published"
-        ? "✓ Article published to Supabase."
-        : status === "scheduled"
-          ? "✓ Article saved as scheduled."
-          : status === "archived"
-            ? "✓ Article archived."
-            : "✓ Draft saved to Supabase.";
-
-      setStatus(document.getElementById("blogEditorStatus"), message, "success");
-      await loadBlogPosts();
-      blogEditor.hidden = false;
-      loadBlogEditor(result.data);
-      showNotice(message);
-    }
-
-    async function deleteBlogPost(id) {
-      if (!confirm("Permanently delete this article? This cannot be undone.")) return;
-
-      const { error } = await supabaseClient
-        .from("blog_posts")
-        .delete()
-        .eq("id", id);
-
-      if (error) {
-        console.error(error);
-        showNotice(error.message || "Could not delete the article.", "error");
-        return;
-      }
-
-      blogPosts = blogPosts.filter(post => post.id !== id);
-      updateBlogStats();
-      renderBlogPosts();
-      resetBlogEditor();
-      showNotice("Article deleted.");
-    }
-
-    async function importBlogStarters() {
-      const { count, error:countError } = await supabaseClient
-        .from("blog_posts")
-        .select("id", { count:"exact", head:true });
-
-      if (countError) {
-        showNotice(countError.message || "Could not check existing articles.", "error");
-        return;
-      }
-
-      if (Number(count || 0) > 0) {
-        showNotice("Starter import skipped because blog_posts already contains articles.", "error");
-        return;
-      }
-
-      const user = (await supabaseClient.auth.getUser()).data.user;
-      const payload = blogStarterPosts.map(post => ({
-        title:post.title,
-        slug:post.slug,
-        excerpt:post.excerpt,
-        content:post.content,
-        cover_image:null,
-        category:post.category,
-        tags:post.tags,
-        status:"published",
-        published_at:new Date(post.published_at).toISOString(),
-        scheduled_at:null,
-        author_id:user?.id || null
-      }));
-
-      const button = document.getElementById("importBlogStarters");
-      button.disabled = true;
-      showNotice("Importing six starter articles...");
-
-      const { error } = await supabaseClient.from("blog_posts").insert(payload);
-
+      if (id) result = await state.client.from(TABLES.articles).update(payload).eq("id", id).select().single();
+      else result = await state.client.from(TABLES.articles).insert(payload).select().single();
+      if (result.error) throw result.error;
+      notify(status === "published" ? "Article published in Supabase." : "Draft saved.", "success");
+      resetArticleForm();
+      await refreshAll();
+    } finally {
       button.disabled = false;
-
-      if (error) {
-        console.error(error);
-        showNotice(error.message || "Starter import failed.", "error");
-        return;
-      }
-
-      await loadBlogPosts();
-      showNotice("✓ Six starter articles imported.");
+      button.textContent = status === "published" ? "Publish Now" : "Save Draft";
     }
+  }
 
-    async function loadNewsletterSubscribers() {
-      newsletterList.innerHTML = '<div class="loading">Loading newsletter subscribers...</div>';
+  async function updateArticleStatus(id, status) {
+    const payload = {
+      status,
+      published: status === "published",
+      published_at: status === "published" ? new Date().toISOString() : null
+    };
+    const { error } = await state.client.from(TABLES.articles).update(payload).eq("id", id);
+    if (error) throw error;
+    notify(status === "published" ? "Article published." : "Article updated.", "success");
+    await refreshAll();
+  }
 
-      const { data, error } = await supabaseClient
-        .from("newsletter_subscribers")
-        .select("*")
-        .order("created_at", { ascending:false });
+  async function deleteArticle(id) {
+    if (!confirm("Permanently delete this article?")) return;
+    const { error } = await state.client.from(TABLES.articles).delete().eq("id", id);
+    if (error) throw error;
+    notify("Article deleted.", "success");
+    await refreshAll();
+  }
 
-      if (error) {
-        console.error(error);
-        newsletterSubscribers = [];
-        newsletterList.innerHTML =
-          '<div class="empty">Could not load newsletter subscribers. Check that newsletter_subscribers exists and its admin RLS policy allows authenticated admins to read it.</div>';
-        updateStats();
-        return;
-      }
+  async function updateCommentStatus(id, status) {
+    const { error } = await state.client.from(TABLES.comments).update({ status }).eq("id", id);
+    if (error) throw error;
+    notify(`Comment ${status}.`, "success");
+    await refreshAll();
+  }
 
-      newsletterSubscribers = data || [];
-      updateStats();
-      renderActiveSection();
+  async function saveCommentReply(id) {
+    const text = $(`reply-text-${id}`).value.trim();
+    if (!text) throw new Error("Please write a reply first.");
+    const existing = state.replies.find(r => String(r.comment_id) === String(id));
+    const payload = {
+      comment_id: id,
+      reply: text,
+      admin_id: state.user?.id || null,
+      updated_at: new Date().toISOString()
+    };
+    let result;
+    if (existing) {
+      result = await state.client.from(TABLES.replies).update(payload).eq("comment_id", id);
+    } else {
+      result = await state.client.from(TABLES.replies).insert(payload);
     }
+    if (result.error) throw result.error;
+    notify("Admin reply saved.", "success");
+    await refreshAll();
+  }
 
-    function filteredNewsletterSubscribers() {
-      const query = newsletterSearch.value.trim().toLowerCase();
+  async function markMessageRead(id) {
+    const { error } = await state.client.from(TABLES.messages).update({ status: "read" }).eq("id", id);
+    if (error) throw error;
+    notify("Message marked as read.");
+    await refreshAll();
+  }
 
-      return newsletterSubscribers.filter(subscriber => {
-        const status = String(subscriber.status || "active").toLowerCase();
-        const statusMatch =
-          activeNewsletterStatus === "all" || status === activeNewsletterStatus;
+  function exportJson() {
+    const data = {
+      exported_at: new Date().toISOString(),
+      articles: state.articles, comments: state.comments,
+      replies: state.replies, messages: state.messages, subscribers: state.subscribers
+    };
+    downloadFile("adgoot-admin-backup.json", JSON.stringify(data, null, 2), "application/json");
+  }
 
-        const searchMatch = !query || [
-          subscriber.email,
-          subscriber.name,
-          subscriber.source,
-          subscriber.status
-        ].join(" ").toLowerCase().includes(query);
+  function exportSubscribersCsv() {
+    const rows = state.subscribers;
+    const csv = ["email,status,created_at", ...rows.map(r => [
+      r.email || "", r.status || "", r.created_at || ""
+    ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(","))].join("\r\n");
+    downloadFile("newsletter-subscribers.csv", csv, "text/csv;charset=utf-8");
+  }
 
-        return statusMatch && searchMatch;
+  function downloadFile(name, content, type) {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = name; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function startSessionTimer() {
+    clearTimeout(state.sessionTimer);
+    $("sessionStatus").textContent = "Active";
+    state.sessionTimer = setTimeout(() => signOut(true), 5 * 60 * 1000);
+  }
+
+  async function signOut(expired = false) {
+    clearTimeout(state.sessionTimer);
+    if (state.client) await state.client.auth.signOut();
+    state.user = null;
+    $("appView").classList.add("hidden");
+    $("loginView").classList.remove("hidden");
+    if (expired) setNotice("loginNotice", "You were signed out after five minutes. Please sign in again.");
+  }
+
+  async function initializeApp() {
+    if (!hasConfig()) {
+      setNotice("loginNotice", "Add your Supabase publishable/anon key in SUPABASE_KEY near the bottom of this file.", "error");
+      return;
+    }
+    state.client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const { data, error } = await state.client.auth.getSession();
+    if (error) console.warn(error.message);
+    if (data?.session) await showApp(data.session.user);
+  }
+
+  async function showApp(user) {
+    state.user = user;
+    $("loginView").classList.add("hidden");
+    $("appView").classList.remove("hidden");
+    startSessionTimer();
+    await refreshAll();
+  }
+
+  async function runAction(action) {
+    try { await action(); }
+    catch (error) {
+      console.error(error);
+      notify(error.message || "Something went wrong. Check your database schema and RLS policies.");
+    }
+  }
+
+  $("loginForm").addEventListener("submit", async event => {
+    event.preventDefault();
+    if (!hasConfig()) {
+      setNotice("loginNotice", "Configure SUPABASE_KEY first.", "error");
+      return;
+    }
+    $("loginButton").disabled = true;
+    setNotice("loginNotice", "Signing in…");
+    try {
+      if (!state.client) state.client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      const { data, error } = await state.client.auth.signInWithPassword({
+        email: $("email").value.trim(), password: $("password").value
       });
+      if (error) throw error;
+      setNotice("loginNotice", "");
+      await showApp(data.user);
+    } catch (error) {
+      setNotice("loginNotice", error.message || "Sign-in failed.", "error");
+    } finally { $("loginButton").disabled = false; }
+  });
+
+  $("navigation").addEventListener("click", event => {
+    const btn = event.target.closest("[data-page]");
+    if (btn) navigate(btn.dataset.page);
+  });
+
+  $("articleForm").addEventListener("submit", event => {
+    event.preventDefault();
+    runAction(() => saveArticle($("articleStatus").value));
+  });
+  $("saveDraftButton").addEventListener("click", () => runAction(() => saveArticle("draft")));
+  $("newArticleButton").addEventListener("click", resetArticleForm);
+  $("clearArticleButton").addEventListener("click", resetArticleForm);
+  $("quickNewArticle").addEventListener("click", () => { navigate("articles"); resetArticleForm(); });
+  $("quickComments").addEventListener("click", () => navigate("comments"));
+  $("quickMessages").addEventListener("click", () => navigate("messages"));
+
+  $("articlesList").addEventListener("click", event => {
+    const edit = event.target.closest("[data-edit-article]");
+    const publish = event.target.closest("[data-publish-article]");
+    const del = event.target.closest("[data-delete-article]");
+    if (edit) {
+      const row = state.articles.find(r => String(r.id) === edit.dataset.editArticle);
+      if (row) fillArticleForm(row);
     }
+    if (publish) runAction(() => updateArticleStatus(publish.dataset.publishArticle, "published"));
+    if (del) runAction(() => deleteArticle(del.dataset.deleteArticle));
+  });
 
-    function newsletterSubscriberStatus(subscriber) {
-      return String(subscriber.status || "active").toLowerCase() === "unsubscribed"
-        ? "unsubscribed"
-        : "active";
+  $("commentsList").addEventListener("click", event => {
+    const statusBtn = event.target.closest("[data-comment-status]");
+    const replyBtn = event.target.closest("[data-reply-id]");
+    const saveBtn = event.target.closest("[data-save-reply]");
+    const cancelBtn = event.target.closest("[data-cancel-reply]");
+    if (statusBtn) runAction(() => updateCommentStatus(statusBtn.dataset.commentId, statusBtn.dataset.commentStatus));
+    if (replyBtn) {
+      const box = $(`reply-box-${replyBtn.dataset.replyId}`);
+      if (box) box.classList.toggle("hidden");
     }
-
-    function renderNewsletterSubscribers() {
-      const items = filteredNewsletterSubscribers();
-      newsletterList.replaceChildren();
-
-      if (!items.length) {
-        const empty = document.createElement("div");
-        empty.className = "empty";
-        empty.textContent = activeNewsletterStatus === "active"
-          ? "No active newsletter subscribers yet."
-          : activeNewsletterStatus === "unsubscribed"
-            ? "No unsubscribed contacts."
-            : "No newsletter subscribers match this view.";
-        newsletterList.appendChild(empty);
-        return;
-      }
-
-      items.forEach(subscriber => {
-        const card = document.createElement("article");
-        card.className = "newsletter-row";
-
-        const body = document.createElement("div");
-
-        const email = document.createElement("div");
-        email.className = "newsletter-email";
-        email.textContent = String(subscriber.email || "No email");
-
-        const meta = document.createElement("div");
-        meta.className = "newsletter-meta";
-
-        const status = newsletterSubscriberStatus(subscriber);
-        const badge = document.createElement("span");
-        badge.className = `newsletter-status ${status}`;
-        badge.textContent = status === "active" ? "Active" : "Unsubscribed";
-
-        const name = subscriber.name ? document.createElement("span") : null;
-        if (name) name.textContent = subscriber.name;
-
-        const source = subscriber.source ? document.createElement("span") : null;
-        if (source) source.textContent = `Source: ${subscriber.source}`;
-
-        const date = document.createElement("span");
-        date.textContent = `Subscribed: ${formatDate(subscriber.created_at)}`;
-
-        meta.append(badge);
-        if (name) meta.append(name);
-        if (source) meta.append(source);
-        meta.append(date);
-
-        body.append(email, meta);
-
-        const actions = document.createElement("div");
-        actions.className = "newsletter-row-actions";
-
-        const mail = document.createElement("a");
-        mail.className = "action approve";
-        mail.href = `mailto:${encodeURIComponent(subscriber.email || "")}`;
-        mail.innerHTML = '<i class="fa-solid fa-envelope"></i> Email';
-        mail.style.textDecoration = "none";
-        mail.style.textAlign = "center";
-        mail.style.display = "inline-flex";
-        mail.style.alignItems = "center";
-        mail.style.justifyContent = "center";
-        actions.appendChild(mail);
-
-        if (status === "active") {
-          const unsubscribe = document.createElement("button");
-          unsubscribe.className = "action reject";
-          unsubscribe.type = "button";
-          unsubscribe.innerHTML = '<i class="fa-solid fa-user-minus"></i> Unsubscribe';
-          unsubscribe.addEventListener("click", () =>
-            updateNewsletterStatus(subscriber.id, "unsubscribed")
-          );
-          actions.appendChild(unsubscribe);
-        } else {
-          const reactivate = document.createElement("button");
-          reactivate.className = "action approve";
-          reactivate.type = "button";
-          reactivate.innerHTML = '<i class="fa-solid fa-user-plus"></i> Reactivate';
-          reactivate.addEventListener("click", () =>
-            updateNewsletterStatus(subscriber.id, "active")
-          );
-          actions.appendChild(reactivate);
-        }
-
-        const remove = document.createElement("button");
-        remove.className = "action delete";
-        remove.type = "button";
-        remove.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
-        remove.addEventListener("click", () => deleteNewsletterSubscriber(subscriber.id));
-        actions.appendChild(remove);
-
-        card.append(body, actions);
-        newsletterList.appendChild(card);
-      });
+    if (saveBtn) runAction(() => saveCommentReply(saveBtn.dataset.saveReply));
+    if (cancelBtn) {
+      const box = $(`reply-box-${cancelBtn.dataset.cancelReply}`);
+      if (box) box.classList.add("hidden");
     }
+  });
 
-    async function updateNewsletterStatus(id, status) {
-      const label = status === "active" ? "reactivate" : "unsubscribe";
-      if (!confirm(`Are you sure you want to ${label} this subscriber?`)) return;
-
-      const updates = {
-        status,
-        unsubscribed_at: status === "unsubscribed" ? new Date().toISOString() : null
-      };
-
-      const { error } = await supabaseClient
-        .from("newsletter_subscribers")
-        .update(updates)
-        .eq("id", id);
-
-      if (error) {
-        console.error(error);
-        showNotice("Could not update the subscriber. Check your newsletter RLS policy.", "error");
-        return;
-      }
-
-      const item = newsletterSubscribers.find(s => s.id === id);
-      if (item) Object.assign(item, updates);
-
-      updateStats();
-      renderNewsletterSubscribers();
-      showNotice(`Subscriber ${status === "active" ? "reactivated" : "unsubscribed"}.`);
+  $("messagesList").addEventListener("click", event => {
+    const read = event.target.closest("[data-message-read]");
+    const reply = event.target.closest("[data-message-reply]");
+    if (read) runAction(() => markMessageRead(read.dataset.messageRead));
+    if (reply) {
+      const row = state.messages.find(r => String(r.id) === reply.dataset.messageReply);
+      if (!row) return;
+      const email = firstValue(row, ["email"], "");
+      const subject = encodeURIComponent("Re: Your message to David Agootson");
+      window.location.href = `mailto:${encodeURIComponent(email)}?subject=${subject}`;
     }
-
-    async function deleteNewsletterSubscriber(id) {
-      if (!confirm("Permanently delete this newsletter subscriber? This cannot be undone.")) return;
-
-      const { error } = await supabaseClient
-        .from("newsletter_subscribers")
-        .delete()
-        .eq("id", id);
-
-      if (error) {
-        console.error(error);
-        showNotice("Could not delete the subscriber. Check your newsletter RLS policy.", "error");
-        return;
-      }
-
-      newsletterSubscribers = newsletterSubscribers.filter(s => s.id !== id);
-      updateStats();
-      renderNewsletterSubscribers();
-      showNotice("Newsletter subscriber deleted.");
-    }
-
-    function exportNewsletterCSV() {
-      const items = filteredNewsletterSubscribers();
-      if (!items.length) {
-        showNotice("There are no subscribers in the current view to export.", "error");
-        return;
-      }
-
-      const headers = ["email", "name", "status", "source", "created_at", "unsubscribed_at"];
-      const csvCell = value => `"${String(value ?? "").replace(/"/g, '""')}"`;
-      const rows = items.map(item => headers.map(key => csvCell(item[key])).join(","));
-      const csv = [headers.join(","), ...rows].join("\r\n");
-
-      const blob = new Blob([csv], { type:"text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `newsletter-subscribers-${new Date().toISOString().slice(0,10)}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-
-      showNotice(`✓ Exported ${items.length} subscriber${items.length === 1 ? "" : "s"}.`);
-    }
-
-    function showNotice(message, type = "success") {
-      notice.textContent = message;
-      notice.className = "notice show " + type;
-      clearTimeout(showNotice.timer);
-      showNotice.timer = setTimeout(() => {
-        notice.className = "notice";
-      }, 3500);
-    }
-
-    function escapeForText(value) {
-      return String(value ?? "");
-    }
-
-    function formatDate(value) {
-      const date = new Date(value);
-      return Number.isNaN(date.getTime()) ? "" : date.toLocaleString();
-    }
-
-    async function loadPhotos() {
-      try {
-        const response = await fetch("images/photos.json", { cache: "no-store" });
-        if (!response.ok) return;
-        const photos = await response.json();
-        photos.forEach(photo => {
-          const key = photo.image || photo.title;
-          photoMap.set(key, photo);
-        });
-      } catch (error) {
-        console.warn("Could not load photo metadata:", error);
-      }
-    }
-
-    async function isAdmin(userId) {
-      const { data, error } = await supabaseClient
-        .from("admin_users")
-        .select("user_id")
-        .eq("user_id", userId)
-        .maybeSingle();
-      return !error && !!data;
-    }
-
-    async function checkSession() {
-      try {
-        loginLoading.hidden = false;
-        const { data: { session }, error } = await supabaseClient.auth.getSession();
-        if (error) throw error;
-        if (!session) {
-          showLogin();
-          return;
-        }
-        const allowed = await isAdmin(session.user.id);
-        if (!allowed) {
-          await supabaseClient.auth.signOut();
-          loginError.textContent = "This account is not authorized to access the admin area.";
-          showLogin();
-          return;
-        }
-        await showAdmin(session.user);
-      } catch (error) {
-        console.error("Admin initialization failed:", error);
-        showLogin();
-        loginError.textContent = `Could not load the admin area: ${error?.message || "Unknown error"}`;
-      } finally {
-        loginLoading.hidden = true;
-      }
-    }
-
-    function showLogin() {
-      loginScreen.style.display = "grid";
-      adminApp.style.display = "none";
-    }
-
-    async function showAdmin(user) {
-      loginLoading.hidden = false;
-      loginLoading.textContent = "Loading your administration dashboard...";
-      userEmail.textContent = user.email || "";
-      currentBlogUser = user;
-      await loadPhotos();
-      await Promise.all([loadComments(), loadContacts(), loadBlogPosts(), loadNewsletterSubscribers()]);
-      loginScreen.style.display = "none";
-      adminApp.style.display = "block";
-      loginLoading.hidden = true;
-      loginLoading.textContent = "Checking account...";
-    }
-
-    async function loadComments() {
-      commentList.innerHTML = '<div class="loading">Loading...</div>';
-      const { data, error } = await supabaseClient
-        .from("comments")
-        .select("id, photo_id, name, comment, status, created_at")
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error(error);
-        commentList.innerHTML = '<div class="empty">Could not load comments. Check your RLS policies and admin setup.</div>';
-        return;
-      }
-
-      comments = data || [];
-      updateStats();
-      renderActiveSection();
-    }
-
-    async function loadContacts() {
-      contactList.innerHTML = '<div class="loading">Loading...</div>';
-      const { data, error } = await supabaseClient
-        .from("contact_messages")
-        .select("id, name, email, subject, category, message, status, created_at, replied_at")
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error(error);
-        contactList.innerHTML = '<div class="empty">Could not load contact messages. Check your RLS policies and admin setup.</div>';
-        return;
-      }
-
-      contacts = data || [];
-      updateStats();
-      renderActiveSection();
-    }
-
-    function updateStats() {
-      if (activeSection === "comments") {
-        document.getElementById("stat1Label").textContent = "Total";
-        document.getElementById("stat2Label").textContent = "Pending";
-        document.getElementById("stat3Label").textContent = "Approved";
-        document.getElementById("stat4Label").textContent = "Rejected";
-        document.getElementById("totalCount").textContent = comments.length;
-        document.getElementById("pendingCount").textContent = comments.filter(c => c.status === "pending").length;
-        document.getElementById("approvedCount").textContent = comments.filter(c => c.status === "approved").length;
-        document.getElementById("rejectedCount").textContent = comments.filter(c => c.status === "rejected").length;
-      } else if (activeSection === "contacts") {
-        document.getElementById("stat1Label").textContent = "Total";
-        document.getElementById("stat2Label").textContent = "New";
-        document.getElementById("stat3Label").textContent = "Replied";
-        document.getElementById("stat4Label").textContent = "Spam";
-        document.getElementById("totalCount").textContent = contacts.length;
-        document.getElementById("pendingCount").textContent = contacts.filter(c => c.status === "new").length;
-        document.getElementById("approvedCount").textContent = contacts.filter(c => c.status === "replied").length;
-        document.getElementById("rejectedCount").textContent = contacts.filter(c => c.status === "spam").length;
-      } else {
-        const active = newsletterSubscribers.filter(s => newsletterSubscriberStatus(s) === "active").length;
-        const unsubscribed = newsletterSubscribers.filter(s => newsletterSubscriberStatus(s) === "unsubscribed").length;
-        document.getElementById("stat1Label").textContent = "Total";
-        document.getElementById("stat2Label").textContent = "Active";
-        document.getElementById("stat3Label").textContent = "Unsubscribed";
-        document.getElementById("stat4Label").textContent = "Ready to send";
-        document.getElementById("totalCount").textContent = newsletterSubscribers.length;
-        document.getElementById("pendingCount").textContent = active;
-        document.getElementById("approvedCount").textContent = unsubscribed;
-        document.getElementById("rejectedCount").textContent = active;
-      }
-    }
-
-    function filteredComments() {
-      const query = search.value.trim().toLowerCase();
-      return comments.filter(comment => {
-        const statusMatch = activeStatus === "all" || comment.status === activeStatus;
-        const photo = photoMap.get(comment.photo_id);
-        const photoText = photo ? `${photo.title || ""} ${photo.description || ""}` : "";
-        const searchMatch = !query || [
-          comment.name, comment.comment, comment.photo_id, photoText
-        ].join(" ").toLowerCase().includes(query);
-        return statusMatch && searchMatch;
-      });
-    }
-
-    function filteredContacts() {
-      const query = search.value.trim().toLowerCase();
-      return contacts.filter(contact => {
-        const statusMatch = activeContactStatus === "all" || contact.status === activeContactStatus;
-        const searchMatch = !query || [
-          contact.name, contact.email, contact.subject, contact.category, contact.message
-        ].join(" ").toLowerCase().includes(query);
-        return statusMatch && searchMatch;
-      });
-    }
-
-    function renderActiveSection() {
-      const isBlog = activeSection === "blog";
-      const isNewsletter = activeSection === "newsletter";
-
-      moderationPanel.hidden = isBlog || isNewsletter;
-      blogAdminPanel.hidden = !isBlog;
-      newsletterAdminPanel.hidden = !isNewsletter;
-
-      commentList.hidden = activeSection !== "comments";
-      contactList.hidden = activeSection !== "contacts";
-      tabs.hidden = activeSection !== "comments";
-      contactTabs.hidden = activeSection !== "contacts";
-
-      if (isBlog) {
-        updateBlogStats();
-        renderBlogPosts();
-        return;
-      }
-
-      if (isNewsletter) {
-        updateStats();
-        renderNewsletterSubscribers();
-        return;
-      }
-
-      updateStats();
-
-      if (activeSection === "comments") {
-        search.placeholder = "Search...";
-        renderComments();
-      } else {
-        search.placeholder = "Search name, email, subject or message...";
-        renderContacts();
-      }
-    }
-
-    function renderComments() {
-      const items = filteredComments();
-      commentList.replaceChildren();
-
-      if (!items.length) {
-        const empty = document.createElement("div");
-        empty.className = "empty";
-        empty.textContent = activeStatus === "pending"
-          ? "No pending comments. You're all caught up."
-          : "No comments match this view.";
-        commentList.appendChild(empty);
-        return;
-      }
-
-      items.forEach(comment => {
-        const card = document.createElement("article");
-        card.className = "comment-card";
-
-        const body = document.createElement("div");
-
-        const meta = document.createElement("div");
-        meta.className = "meta";
-
-        const name = document.createElement("span");
-        name.className = "name";
-        name.textContent = escapeForText(comment.name || "Visitor");
-
-        const badge = document.createElement("span");
-        badge.className = "badge " + comment.status;
-        badge.textContent = comment.status;
-
-        const date = document.createElement("span");
-        date.className = "date";
-        date.textContent = formatDate(comment.created_at);
-
-        meta.append(name, badge, date);
-
-        const text = document.createElement("p");
-        text.className = "comment-text";
-        text.textContent = escapeForText(comment.comment);
-
-        const photo = photoMap.get(comment.photo_id);
-        const photoRef = document.createElement("div");
-        photoRef.className = "photo-ref";
-        photoRef.innerHTML = "<strong>Photo:</strong> ";
-        const photoTitle = document.createElement("span");
-        photoTitle.textContent = photo ? (photo.title || comment.photo_id) : comment.photo_id;
-        photoRef.appendChild(photoTitle);
-
-        body.append(meta, text, photoRef);
-
-        const actions = document.createElement("div");
-        actions.className = "actions";
-
-        if (comment.status !== "approved") {
-          const approve = document.createElement("button");
-          approve.className = "action approve";
-          approve.type = "button";
-          approve.innerHTML = '<i class="fa-solid fa-check"></i> Approve';
-          approve.addEventListener("click", () => updateCommentStatus(comment.id, "approved"));
-          actions.appendChild(approve);
-        }
-
-        if (comment.status !== "rejected") {
-          const reject = document.createElement("button");
-          reject.className = "action reject";
-          reject.type = "button";
-          reject.innerHTML = '<i class="fa-solid fa-xmark"></i> Reject';
-          reject.addEventListener("click", () => updateCommentStatus(comment.id, "rejected"));
-          actions.appendChild(reject);
-        }
-
-        const remove = document.createElement("button");
-        remove.className = "action delete";
-        remove.type = "button";
-        remove.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
-        remove.addEventListener("click", () => deleteComment(comment.id));
-        actions.appendChild(remove);
-
-        card.append(body, actions);
-        commentList.appendChild(card);
-      });
-    }
-
-    function renderContacts() {
-      const items = filteredContacts();
-      contactList.replaceChildren();
-
-      if (!items.length) {
-        const empty = document.createElement("div");
-        empty.className = "empty";
-        empty.textContent = activeContactStatus === "new"
-          ? "No new contact messages."
-          : "No contact messages match this view.";
-        contactList.appendChild(empty);
-        return;
-      }
-
-      items.forEach(contact => {
-        const card = document.createElement("article");
-        card.className = "contact-card";
-
-        const body = document.createElement("div");
-
-        const meta = document.createElement("div");
-        meta.className = "meta";
-
-        const name = document.createElement("span");
-        name.className = "name";
-        name.textContent = escapeForText(contact.name || "Visitor");
-
-        const badge = document.createElement("span");
-        badge.className = "badge " + contact.status;
-        badge.textContent = contact.status;
-
-        const date = document.createElement("span");
-        date.className = "date";
-        date.textContent = formatDate(contact.created_at);
-
-        meta.append(name, badge, date);
-
-        const subject = document.createElement("div");
-        subject.className = "contact-subject";
-        subject.textContent = escapeForText(contact.subject || "(No subject)");
-
-        const email = document.createElement("a");
-        email.className = "contact-email";
-        email.href = `mailto:${contact.email}`;
-        email.textContent = escapeForText(contact.email);
-
-        const metaLine = document.createElement("div");
-        metaLine.className = "contact-meta-line";
-        const category = document.createElement("span");
-        category.className = "category-badge";
-        category.textContent = escapeForText(contact.category || "General inquiry");
-        metaLine.appendChild(category);
-
-        const message = document.createElement("p");
-        message.className = "contact-message";
-        message.textContent = escapeForText(contact.message);
-
-        body.append(meta, subject, email, metaLine, message);
-
-        const actions = document.createElement("div");
-        actions.className = "actions";
-
-        if (contact.status !== "read" && contact.status !== "replied") {
-          const markRead = document.createElement("button");
-          markRead.className = "action approve";
-          markRead.type = "button";
-          markRead.innerHTML = '<i class="fa-solid fa-eye"></i> Mark Read';
-          markRead.addEventListener("click", () => updateContactStatus(contact.id, "read"));
-          actions.appendChild(markRead);
-        }
-
-        if (contact.status !== "replied") {
-          const reply = document.createElement("button");
-          reply.className = "action approve";
-          reply.type = "button";
-          reply.innerHTML = '<i class="fa-solid fa-reply"></i> Reply';
-          reply.addEventListener("click", () => openReplyComposer(contact));
-          actions.appendChild(reply);
-        }
-
-        if (contact.status !== "archived") {
-          const archive = document.createElement("button");
-          archive.className = "action reject";
-          archive.type = "button";
-          archive.innerHTML = '<i class="fa-solid fa-box-archive"></i> Archive';
-          archive.addEventListener("click", () => updateContactStatus(contact.id, "archived"));
-          actions.appendChild(archive);
-        }
-
-        if (contact.status !== "spam") {
-          const spam = document.createElement("button");
-          spam.className = "action reject";
-          spam.type = "button";
-          spam.innerHTML = '<i class="fa-solid fa-ban"></i> Spam';
-          spam.addEventListener("click", () => updateContactStatus(contact.id, "spam"));
-          actions.appendChild(spam);
-        }
-
-        const remove = document.createElement("button");
-        remove.className = "action delete";
-        remove.type = "button";
-        remove.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
-        remove.addEventListener("click", () => deleteContact(contact.id));
-        actions.appendChild(remove);
-
-        card.append(body, actions);
-        contactList.appendChild(card);
-      });
-    }
-
-    async function updateCommentStatus(id, status) {
-      const label = status === "approved" ? "approve" : "reject";
-      if (!confirm(`Are you sure you want to ${label} this comment?`)) return;
-
-      const { error } = await supabaseClient
-        .from("comments")
-        .update({ status })
-        .eq("id", id);
-
-      if (error) {
-        console.error(error);
-        showNotice("Could not update the comment. Check your RLS policy.", "error");
-        return;
-      }
-
-      const item = comments.find(c => c.id === id);
-      if (item) item.status = status;
-      updateStats();
-      renderComments();
-      showNotice(`Comment ${status}.`);
-    }
-
-    async function deleteComment(id) {
-      if (!confirm("Permanently delete this comment? This cannot be undone.")) return;
-
-      const { error } = await supabaseClient
-        .from("comments")
-        .delete()
-        .eq("id", id);
-
-      if (error) {
-        console.error(error);
-        showNotice("Could not delete the comment. Check your RLS policy.", "error");
-        return;
-      }
-
-      comments = comments.filter(c => c.id !== id);
-      updateStats();
-      renderComments();
-      showNotice("Comment deleted.");
-    }
-
-
-    function openReplyComposer(contact) {
-      replyContact = contact;
-      replyTo.value = contact.email || "";
-      replyRecipient.textContent = `${contact.name || "Visitor"} · ${contact.email || ""}`;
-      replySubject.value = contact.subject
-        ? (String(contact.subject).toLowerCase().startsWith("re:") ? contact.subject : `Re: ${contact.subject}`)
-        : "Re: Your message";
-      replyOriginal.innerHTML =
-        `<strong>${escapeForText(contact.name || "Visitor")}</strong><br>${escapeForText(contact.message || "")}`;
-      replyMessage.value = "";
-      replyStatus.textContent = "";
-      replyStatus.className = "reply-status";
-      replySend.disabled = false;
-      replySend.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send Reply';
-      replyModal.hidden = false;
-      replyModal.setAttribute("aria-hidden", "false");
-      setTimeout(() => replyMessage.focus(), 50);
-    }
-
-    function closeReplyComposer() {
-      replyModal.hidden = true;
-      replyModal.setAttribute("aria-hidden", "true");
-      replyContact = null;
-      replyForm.reset();
-      replyStatus.textContent = "";
-      replyStatus.className = "reply-status";
-    }
-
-    async function sendContactReply(event) {
+  });
+
+  $("commentFilter").addEventListener("change", renderComments);
+  $("messageFilter").addEventListener("change", renderMessages);
+  $("globalSearch").addEventListener("input", renderAll);
+  $("refreshButton").addEventListener("click", () => runAction(refreshAll));
+  $("reloadArticlesButton").addEventListener("click", () => runAction(refreshAll));
+  $("reloadCommentsButton").addEventListener("click", () => runAction(refreshAll));
+  $("reloadMessagesButton").addEventListener("click", () => runAction(refreshAll));
+  $("exportButton").addEventListener("click", exportJson);
+  $("settingsExportButton").addEventListener("click", exportJson);
+  $("exportSubscribersButton").addEventListener("click", exportSubscribersCsv);
+  $("focusSearchButton").addEventListener("click", () => $("globalSearch").focus());
+  $("logoutButton").addEventListener("click", () => runAction(() => signOut(false)));
+  $("forceLogoutButton").addEventListener("click", () => runAction(() => signOut(false)));
+
+  document.addEventListener("keydown", event => {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
       event.preventDefault();
-      if (!replyContact) return;
-
-      const message = replyMessage.value.trim();
-      const subject = replySubject.value.trim();
-
-      if (!message) {
-        replyStatus.textContent = "Please write a reply first.";
-        replyStatus.className = "reply-status error";
-        replyMessage.focus();
-        return;
-      }
-
-      replySend.disabled = true;
-      replySend.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
-      replyStatus.textContent = "Sending your reply...";
-      replyStatus.className = "reply-status";
-
-      const { data, error } = await supabaseClient.functions.invoke("send-contact-reply", {
-        body: {
-          contact_id: replyContact.id,
-          subject,
-          reply: message
-        }
-      });
-
-      if (error || !data?.success) {
-        console.error("Reply send error:", error, data);
-        replySend.disabled = false;
-        replySend.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send Reply';
-        replyStatus.textContent = data?.error || error?.message || "Could not send the reply.";
-        replyStatus.className = "reply-status error";
-        return;
-      }
-
-      const item = contacts.find(c => c.id === replyContact.id);
-      if (item) {
-        item.status = "replied";
-        item.replied_at = data.replied_at || new Date().toISOString();
-      }
-
-      closeReplyComposer();
-      updateStats();
-      renderContacts();
-      showNotice("Reply sent successfully. Message marked as replied.", "success");
+      $("globalSearch").focus();
     }
+    if (state.user) startSessionTimer();
+  });
 
-    async function updateContactStatus(id, status) {
-      const label = status === "read" ? "mark this message as read"
-        : status === "replied" ? "mark this message as replied"
-        : status === "archived" ? "archive this message"
-        : "mark this message as spam";
+  ["click", "mousemove", "touchstart"].forEach(name => {
+    document.addEventListener(name, () => { if (state.user) startSessionTimer(); }, { passive: true });
+  });
 
-      if (!confirm(`Are you sure you want to ${label}?`)) return;
+  state.client?.auth?.onAuthStateChange?.((_event, session) => {
+    if (session?.user && !state.user) showApp(session.user);
+  });
 
-      const updates = {
-        status,
-        replied_at: status === "replied" ? new Date().toISOString() : null
-      };
-
-      const { error } = await supabaseClient
-        .from("contact_messages")
-        .update(updates)
-        .eq("id", id);
-
-      if (error) {
-        console.error(error);
-        showNotice("Could not update the contact message. Check your RLS policy.", "error");
-        return;
-      }
-
-      const item = contacts.find(c => c.id === id);
-      if (item) {
-        item.status = status;
-        item.replied_at = updates.replied_at;
-      }
-
-      updateStats();
-      renderContacts();
-      showNotice(`Message ${status}.`);
-    }
-
-    async function deleteContact(id) {
-      if (!confirm("Permanently delete this contact message? This cannot be undone.")) return;
-
-      const { error } = await supabaseClient
-        .from("contact_messages")
-        .delete()
-        .eq("id", id);
-
-      if (error) {
-        console.error(error);
-        showNotice("Could not delete the contact message. Check your RLS policy.", "error");
-        return;
-      }
-
-      contacts = contacts.filter(c => c.id !== id);
-      updateStats();
-      renderContacts();
-      showNotice("Contact message deleted.");
-    }
-
-
-    document.getElementById("replyClose").addEventListener("click", closeReplyComposer);
-    document.getElementById("replyCancel").addEventListener("click", closeReplyComposer);
-    replyForm.addEventListener("submit", sendContactReply);
-    replyModal.addEventListener("click", event => {
-      if (event.target === replyModal) closeReplyComposer();
-    });
-    document.addEventListener("keydown", event => {
-      if (event.key === "Escape" && !replyModal.hidden) closeReplyComposer();
-    });
-
-    loginForm.addEventListener("submit", async event => {
-      event.preventDefault();
-      loginError.textContent = "";
-      loginLoading.hidden = false;
-      loginLoading.textContent = "Signing in and checking admin access...";
-      loginBtn.disabled = true;
-      loginBtn.textContent = "Signing in...";
-
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
-
-      try {
-        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-
-        if (!data.user) {
-          throw new Error("Supabase did not return a user after sign-in.");
-        }
-
-        const allowed = await isAdmin(data.user.id);
-        if (!allowed) {
-          await supabaseClient.auth.signOut();
-          throw new Error("This account is not authorized to access the admin area.");
-        }
-
-        await showAdmin(data.user);
-      } catch (error) {
-        console.error("Admin sign-in failed:", error);
-        loginError.textContent = error?.message || "Sign in failed.";
-        loginLoading.hidden = true;
-      } finally {
-        loginBtn.disabled = false;
-        loginBtn.textContent = "Sign in";
-      }
-    });
-
-    logoutBtn.addEventListener("click", async () => {
-      await supabaseClient.auth.signOut();
-      comments = [];
-      contacts = [];
-      newsletterSubscribers = [];
-      blogPosts = [];
-      currentBlogUser = null;
-      showLogin();
-    });
-
-    tabs.addEventListener("click", event => {
-      const button = event.target.closest("[data-status]");
-      if (!button) return;
-      activeStatus = button.dataset.status;
-      tabs.querySelectorAll(".tab").forEach(tab => tab.classList.toggle("active", tab === button));
-      renderComments();
-    });
-
-    sectionSwitcher.addEventListener("click", event => {
-      const button = event.target.closest("[data-section]");
-      if (!button) return;
-
-      activeSection = button.dataset.section;
-      sectionSwitcher.querySelectorAll(".section-btn").forEach(btn => {
-        btn.classList.toggle("active", btn === button);
-      });
-
-      if (activeSection === "blog" && !blogPosts.length) {
-        loadBlogPosts();
-      }
-      if (activeSection === "newsletter" && !newsletterSubscribers.length) {
-        loadNewsletterSubscribers();
-      }
-      renderActiveSection();
-    });
-
-    contactTabs.addEventListener("click", event => {
-      const button = event.target.closest("[data-contact-status]");
-      if (!button) return;
-
-      activeContactStatus = button.dataset.contactStatus;
-      contactTabs.querySelectorAll(".tab").forEach(tab => {
-        tab.classList.toggle("active", tab === button);
-      });
-
-      renderContacts();
-    });
-
-    search.addEventListener("input", () => {
-      if (activeSection === "comments") renderComments();
-      else if (activeSection === "contacts") renderContacts();
-    });
-
-    newsletterTabs.addEventListener("click", event => {
-      const button = event.target.closest("[data-newsletter-status]");
-      if (!button) return;
-
-      activeNewsletterStatus = button.dataset.newsletterStatus;
-      newsletterTabs.querySelectorAll(".newsletter-tab").forEach(tab => {
-        tab.classList.toggle("active", tab === button);
-      });
-
-      renderNewsletterSubscribers();
-    });
-
-    newsletterSearch.addEventListener("input", renderNewsletterSubscribers);
-    document.getElementById("refreshNewsletter").addEventListener("click", loadNewsletterSubscribers);
-    document.getElementById("exportNewsletter").addEventListener("click", exportNewsletterCSV);
-
-
-    document.getElementById("newBlogPost").addEventListener("click", resetBlogEditor);
-    document.getElementById("cancelBlogEdit").addEventListener("click", () => {
-      blogEditor.hidden = true;
-      document.getElementById("blogEditorStatus").textContent = "";
-    });
-    document.getElementById("importBlogStarters").addEventListener("click", importBlogStarters);
-    blogEditor.addEventListener("submit", saveBlogPost);
-
-    document.getElementById("blogTitle").addEventListener("input", () => {
-      const id = document.getElementById("blogEditId").value;
-      if (id) return;
-      const slug = blogSlugify(document.getElementById("blogTitle").value);
-      document.getElementById("blogSlugPreview").textContent =
-        slug ? `Slug: ${slug}-...` : "Slug will be generated";
-    });
-
-    blogTabs.addEventListener("click", event => {
-      const button = event.target.closest("[data-blog-status]");
-      if (!button) return;
-      activeBlogStatus = button.dataset.blogStatus;
-      blogTabs.querySelectorAll(".blog-tab").forEach(tab => {
-        tab.classList.toggle("active", tab === button);
-      });
-      renderBlogPosts();
-    });
-
-    blogSearch.addEventListener("input", renderBlogPosts);
-
-    blogPostList.addEventListener("click", async event => {
-      const edit = event.target.closest("[data-blog-edit]");
-      const preview = event.target.closest("[data-blog-preview]");
-      const remove = event.target.closest("[data-blog-delete]");
-
-      if (edit) {
-        const post = blogPosts.find(item => item.id === edit.dataset.blogEdit);
-        if (post) loadBlogEditor(post);
-        return;
-      }
-
-      if (preview) {
-        const url = `https://agootson.is-a.dev/blog.html?post=${encodeURIComponent(preview.dataset.blogPreview)}`;
-        window.open(url, "_blank", "noopener");
-        return;
-      }
-
-      if (remove) {
-        await deleteBlogPost(remove.dataset.blogDelete);
-      }
-    });
-
-    const sidebar = document.getElementById("sidebar");
-    const collapse = document.getElementById("collapse");
-    const mobileMenu = document.getElementById("mobileMenu");
-    const backdrop = document.getElementById("backdrop");
-
-    collapse.addEventListener("click", () => {
-      document.body.classList.toggle("collapsed");
-    });
-
-    function mobileSidebar(open) {
-      sidebar.classList.toggle("open", open);
-      backdrop.classList.toggle("show", open);
-      mobileMenu.setAttribute("aria-expanded", open);
-      document.body.style.overflow = open ? "hidden" : "";
-    }
-
-    mobileMenu.addEventListener("click", () => {
-      mobileSidebar(!sidebar.classList.contains("open"));
-    });
-
-    backdrop.addEventListener("click", () => mobileSidebar(false));
-
-    window.addEventListener("resize", () => {
-      if (window.innerWidth > 900) mobileSidebar(false);
-    });
-
-    document.getElementById("year").textContent = new Date().getFullYear();
-
-    supabaseClient.auth.onAuthStateChange(async (event, session) => {
-      if (event === "SIGNED_OUT") showLogin();
-    });
-
-    window.addEventListener("error", event => {
-      console.error("Admin page error:", event.error || event.message);
-      if (adminApp.style.display !== "block") {
-        loginLoading.hidden = true;
-        loginError.textContent = `Admin page error: ${event.message || "Unknown JavaScript error"}`;
-      }
-    });
-
-    window.addEventListener("unhandledrejection", event => {
-      console.error("Admin page promise error:", event.reason);
-      if (adminApp.style.display !== "block") {
-        loginLoading.hidden = true;
-        loginError.textContent = `Admin page error: ${event.reason?.message || event.reason || "Unknown error"}`;
-      }
-    });
-
-    checkSession();
-  </script>
-
-
-
+  initializeApp();
+})();
+</script>
 </body>
 </html>
