@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#e31b23">
+  <link rel="icon" type="image/png" href="./images.png">
+  <link rel="shortcut icon" type="image/png" href="./images.png">
   <meta name="description" content="David Agootson's photo gallery.">
   <title>Gallery | David Agootson</title>
   <style>
@@ -459,6 +461,7 @@ footer {
           <button class="tool-btn active" id="gridViewBtn" type="button"><i class="fa-solid fa-grip"></i> Grid</button>
           <button class="tool-btn" id="timelineViewBtn" type="button"><i class="fa-solid fa-timeline"></i> Timeline</button>
           <button class="tool-btn" id="favoritesBtn" type="button"><i class="fa-regular fa-heart"></i> Favorites</button>
+          <button class="tool-btn" id="surpriseBtn" type="button" title="Open a random photo from the current results"><i class="fa-solid fa-wand-magic-sparkles"></i> Surprise me</button>
         </div>
       </div>
       <div class="filter-bar" id="filterBar" aria-label="Photo categories"></div>
@@ -566,6 +569,7 @@ footer {
     const gridViewBtn = document.getElementById("gridViewBtn");
     const timelineViewBtn = document.getElementById("timelineViewBtn");
     const favoritesBtn = document.getElementById("favoritesBtn");
+    const surpriseBtn = document.getElementById("surpriseBtn");
     const totalCount = document.getElementById("totalCount");
     const visibleCount = document.getElementById("visibleCount");
     const favoriteCount = document.getElementById("favoriteCount");
@@ -957,6 +961,19 @@ footer {
       favoritesOnly = !favoritesOnly;
       favoritesBtn.classList.toggle("active", favoritesOnly);
       renderGallery();
+    });
+
+    // Surprise Me: open a random photo from the currently visible results.
+    surpriseBtn.addEventListener("click", () => {
+      if (!filteredPhotos.length) {
+        alert("No photos to choose from. Try clearing your search or filters.");
+        return;
+      }
+      let randomIndex = Math.floor(Math.random() * filteredPhotos.length);
+      if (filteredPhotos.length > 1 && randomIndex === currentIndex) {
+        randomIndex = (randomIndex + 1) % filteredPhotos.length;
+      }
+      openLightbox(randomIndex);
     });
 
     gridViewBtn.addEventListener("click", () => setView("grid"));
