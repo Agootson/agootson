@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#e31b23">
+  <link rel="icon" type="image/png" href="./images.png">
+  <link rel="shortcut icon" type="image/png" href="./images.png">
   <meta name="description" content="David Agootson — Projects">
   <title>Projects | David Agootson</title>
 
@@ -77,6 +79,16 @@
     body.collapsed .nav-label { display: none; }
     body.collapsed .nav a { justify-content: center; padding-inline: 0; }
     body.collapsed .collapse span { transform: rotate(180deg); }
+
+    /* Project discovery controls */
+    .project-tools { display:flex; flex-wrap:wrap; gap:9px; align-items:center; margin:24px 0 0; }
+    .project-search { flex:1 1 220px; min-width:0; padding:12px 14px; border:1px solid var(--line); border-radius:9px; background:#fff; color:var(--text); font:inherit; font-size:.76rem; outline:none; }
+    .project-search:focus { border-color:#e9a4a8; box-shadow:0 0 0 3px var(--red-soft); }
+    .project-filter { padding:10px 12px; border:1px solid var(--line); border-radius:999px; background:#fff; color:#626770; font-size:.66rem; font-weight:800; cursor:pointer; }
+    .project-filter:hover, .project-filter.active { color:var(--red); border-color:#f0c3c6; background:var(--red-soft); }
+    .project-count { color:var(--muted); font-size:.68rem; margin-top:12px; }
+    .project-count strong { color:var(--red); }
+    .no-projects { grid-column:1/-1; padding:28px; border:1px dashed #d8dce2; border-radius:12px; background:#fff; color:var(--muted); text-align:center; font-size:.78rem; }
 
     /* ================= MAIN ================= */
     .main { margin-left: var(--sidebar); transition: margin-left .25s ease; }
@@ -330,39 +342,48 @@
       <h1>Projects built from <span>learning and curiosity.</span></h1>
       <p class="lead">This collection reflects my practical journey as a Computer Science student. It includes personal web work, experiments and academic technology projects.</p>
 
+      <div class="project-tools" role="search" aria-label="Find projects">
+        <input class="project-search" id="projectSearch" type="search" placeholder="Search projects or technologies..." aria-label="Search projects">
+        <button class="project-filter active" type="button" data-project-filter="all">All projects</button>
+        <button class="project-filter" type="button" data-project-filter="web">Web</button>
+        <button class="project-filter" type="button" data-project-filter="programming">Programming</button>
+        <button class="project-filter" type="button" data-project-filter="academic">Academic</button>
+      </div>
+      <p class="project-count" id="projectCount" aria-live="polite">Showing <strong>6</strong> projects</p>
+
       <section class="section">
-        <div class="grid">
-          <article class="card">
+        <div class="grid" id="projectGrid">
+          <article class="card" data-category="web" data-search="personal portfolio website html css responsive github pages">
             <div class="card-icon"><i class="fa-solid fa-globe"></i></div>
             <h3>Personal Portfolio Website</h3>
             <p>A responsive personal website for David Agootson, designed with a clean red-and-white visual identity, collapsible sidebar and mobile navigation.</p>
             <div class="tags"><span class="tag red">HTML</span><span class="tag">CSS</span><span class="tag">Responsive</span></div>
           </article>
-          <article class="card">
+          <article class="card" data-category="web" data-search="web technology experiments html5 css3 bootstrap responsive design">
             <div class="card-icon"><i class="fa-solid fa-code"></i></div>
             <h3>Web Technology Experiments</h3>
             <p>Hands-on pages and exercises covering forms, semantic HTML, div layouts, CSS, media queries, Bootstrap grids and responsive design.</p>
             <div class="tags"><span class="tag red">HTML5</span><span class="tag">CSS3</span><span class="tag">Bootstrap</span></div>
           </article>
-          <article class="card">
+          <article class="card" data-category="programming" data-search="python practice projects mysql exception handling database programming">
             <div class="card-icon"><i class="fa-brands fa-python"></i></div>
             <h3>Python Practice Projects</h3>
             <p>Python exercises exploring exception handling, database operations and practical programming concepts as part of academic learning.</p>
             <div class="tags"><span class="tag red">Python</span><span class="tag">MySQL</span><span class="tag">Programming</span></div>
           </article>
-          <article class="card">
+          <article class="card" data-category="academic" data-search="data analysis statistics measurement scales univariate bivariate multivariate">
             <div class="card-icon"><i class="fa-solid fa-database"></i></div>
             <h3>Data Analysis Work</h3>
             <p>Study-driven work around data measurement scales and univariate, bivariate and multivariate analysis, connecting theory with practical reasoning.</p>
             <div class="tags"><span class="tag red">Data Analysis</span><span class="tag">Statistics</span></div>
           </article>
-          <article class="card">
+          <article class="card" data-category="academic" data-search="microprocessor studies microcomputers hardware computer architecture">
             <div class="card-icon"><i class="fa-solid fa-microchip"></i></div>
             <h3>Microprocessor Studies</h3>
             <p>Academic exploration of microprocessor and microcomputer concepts, components and the relationship between hardware and computing systems.</p>
             <div class="tags"><span class="tag red">Microprocessors</span><span class="tag">Computer Architecture</span></div>
           </article>
-          <article class="card">
+          <article class="card" data-category="academic" data-search="compiler design grammar productions programming languages theory">
             <div class="card-icon"><i class="fa-solid fa-diagram-project"></i></div>
             <h3>Compiler Design Studies</h3>
             <p>Academic work around grammars, productions and compiler concepts, building a foundation for understanding how programming languages are processed.</p>
@@ -412,6 +433,45 @@
     backdrop.addEventListener("click", () => mobileSidebar(false));
     window.addEventListener("resize", () => { if (window.innerWidth > 900) mobileSidebar(false); });
     document.getElementById("year").textContent = new Date().getFullYear();
+
+    // Search and filter the project cards without reloading the page.
+    const projectSearch = document.getElementById("projectSearch");
+    const projectCount = document.getElementById("projectCount");
+    const projectFilters = [...document.querySelectorAll("[data-project-filter]")];
+    const projectCards = [...document.querySelectorAll("#projectGrid .card")];
+    let activeProjectFilter = "all";
+
+    function filterProjects() {
+      const query = projectSearch.value.trim().toLowerCase();
+      let visible = 0;
+      projectCards.forEach(card => {
+        const searchable = (card.innerText + " " + (card.dataset.search || "")).toLowerCase();
+        const matchesQuery = !query || searchable.includes(query);
+        const matchesCategory = activeProjectFilter === "all" || card.dataset.category === activeProjectFilter;
+        const show = matchesQuery && matchesCategory;
+        card.hidden = !show;
+        if (show) visible++;
+      });
+      projectCount.innerHTML = `Showing <strong>${visible}</strong> of <strong>${projectCards.length}</strong> projects`;
+      let empty = document.getElementById("noProjects");
+      if (!visible && !empty) {
+        empty = document.createElement("div");
+        empty.id = "noProjects";
+        empty.className = "no-projects";
+        empty.textContent = "No matching projects. Try another search or category.";
+        document.getElementById("projectGrid").appendChild(empty);
+      } else if (visible && empty) {
+        empty.remove();
+      }
+    }
+
+    projectSearch.addEventListener("input", filterProjects);
+    projectFilters.forEach(button => button.addEventListener("click", () => {
+      activeProjectFilter = button.dataset.projectFilter;
+      projectFilters.forEach(item => item.classList.toggle("active", item === button));
+      filterProjects();
+    }));
+    filterProjects();
   </script>
 </body>
 </html>
