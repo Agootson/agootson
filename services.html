@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#e31b23">
+  <link rel="icon" type="image/png" href="./images.png">
+  <link rel="shortcut icon" type="image/png" href="./images.png">
 
   <meta name="description" content="Practical website development, front-end improvements, Python programming, SQL support, basic API integration and technical documentation by David Agootson.">
   <meta name="author" content="David Agootson">
@@ -90,15 +92,7 @@
       transition: width .25s ease, transform .25s ease;
     }
 
-    /* Auto-hide navigation while the reader is idle. Scrolling reveals it. */
-    body.nav-hidden .sidebar {
-      transform: translateX(calc(-100% - 2px));
-    }
-
-    body.nav-hidden .main,
-    body.collapsed.nav-hidden .main {
-      margin-left: 0;
-    }
+    /* Navigation stays visible; it never auto-hides while reading. */
 
     .collapse {
       position: absolute;
@@ -462,12 +456,6 @@
         transition: opacity .22s ease, transform .22s ease;
       }
 
-      body.nav-hidden .mobile-menu {
-        opacity: 0;
-        transform: translateY(-8px);
-        pointer-events: none;
-      }
-
       .mobile-menu span {
         width: 18px;
         height: 2px;
@@ -623,6 +611,14 @@
     .contact-cta h2 { max-width: 680px; }
     .contact-cta .text-link { padding: 11px 15px; border-radius: 6px; background: var(--red); color: white; }
     .contact-cta .text-link:hover { background: var(--red-dark); }
+    .brief-copy {
+      display: inline-flex; align-items: center; gap: 8px; margin: 20px 0 0 10px;
+      padding: 11px 15px; border: 1px solid #e1e3e8; border-radius: 6px;
+      background: #fff; color: #555a63; font: inherit; font-size: .72rem;
+      font-weight: 700; cursor: pointer; transition: .2s ease;
+    }
+    .brief-copy:hover { border-color: #f0a5a9; color: var(--red); background: var(--red-soft); }
+    .brief-feedback { min-height: 1.2em; margin-top: 9px; color: var(--red); font-size: .74rem; }
     @media (max-width: 1050px) { .service-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     @media (max-width: 900px) { .process-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     @media (max-width: 600px) {
@@ -630,6 +626,7 @@
       .service-grid, .process-grid, .fit-grid { grid-template-columns: 1fr; }
       .service-card { padding: 20px; }
       .contact-cta { padding: 23px !important; }
+      .brief-copy { margin-left: 0; }
     }
 
   </style>
@@ -795,6 +792,10 @@
       <h2>Let’s work out the next practical step.</h2>
       <p>Share what you need, your deadline and any links or screenshots that explain the problem. I’ll review the request and let you know whether it is a good fit.</p>
       <a class="text-link" href="https://agootson.is-a.dev/contact.html">Contact me </a>
+      <button class="brief-copy" id="copyBrief" type="button">
+        <i class="fa-regular fa-copy" aria-hidden="true"></i> Copy project brief checklist
+      </button>
+      <p class="brief-feedback" id="briefFeedback" role="status" aria-live="polite"></p>
     </section>
 
     <footer>
@@ -821,42 +822,18 @@
     const collapse = document.getElementById("collapse");
     const mobileMenu = document.getElementById("mobileMenu");
     const backdrop = document.getElementById("backdrop");
-    let navIdleTimer;
-    const NAV_IDLE_DELAY = 1700;
-
+    // Keep navigation visible at all times; no idle auto-hide timer.
     function showNavigation() {
       document.body.classList.remove("nav-hidden");
-      clearTimeout(navIdleTimer);
-      if (sidebar.classList.contains("open")) return;
-      navIdleTimer = setTimeout(() => {
-        // Keep navigation visible while a user is interacting with it.
-        if (!sidebar.matches(":hover") && !mobileMenu.matches(":hover") &&
-            !sidebar.contains(document.activeElement) &&
-            !mobileMenu.contains(document.activeElement) &&
-            !sidebar.classList.contains("open")) {
-          document.body.classList.add("nav-hidden");
-        }
-      }, NAV_IDLE_DELAY);
     }
 
-    // Reveal the navigation while scrolling; hide it after scrolling stops.
+    // Navigation visibility is persistent, including during scrolling.
     window.addEventListener("scroll", showNavigation, { passive: true });
     window.addEventListener("wheel", showNavigation, { passive: true });
     window.addEventListener("touchmove", showNavigation, { passive: true });
-    sidebar.addEventListener("mouseenter", () => {
-      clearTimeout(navIdleTimer);
-      document.body.classList.remove("nav-hidden");
-    });
     sidebar.addEventListener("mouseleave", showNavigation);
-    mobileMenu.addEventListener("mouseenter", () => {
-      clearTimeout(navIdleTimer);
-      document.body.classList.remove("nav-hidden");
-    });
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Tab") {
-        document.body.classList.remove("nav-hidden");
-        clearTimeout(navIdleTimer);
-      }
+      if (event.key === "Tab") document.body.classList.remove("nav-hidden");
     });
 
     collapse.addEventListener("click", () => {
@@ -881,6 +858,30 @@
     });
 
     document.getElementById("year").textContent = new Date().getFullYear();
+
+    // Copy a short checklist visitors can use when enquiring about a project.
+    const copyBrief = document.getElementById("copyBrief");
+    const briefFeedback = document.getElementById("briefFeedback");
+    if (copyBrief && briefFeedback) {
+      copyBrief.addEventListener("click", async () => {
+        const brief = [
+          "Project brief",
+          "1. What do I need built or fixed?",
+          "2. Who will use it, and what should it do?",
+          "3. Do I have an existing website, code, or design?",
+          "4. What features are essential?",
+          "5. What is my deadline?",
+          "6. What is my budget or expected scope?",
+          "7. Links, screenshots, or examples:"
+        ].join("\\n");
+        try {
+          await navigator.clipboard.writeText(brief);
+          briefFeedback.textContent = "Checklist copied. Paste it into your project enquiry.";
+        } catch (error) {
+          briefFeedback.textContent = "Copy is unavailable in this browser. You can still use the checklist: describe the goal, features, existing work, deadline, budget, and examples in your message.";
+        }
+      });
+    }
 
     // Start with navigation visible, then tuck it away when reading begins.
     showNavigation();
