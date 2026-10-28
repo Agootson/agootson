@@ -1,752 +1,144 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#0b0b0b">
-  <title>Admin Dashboard | David Agootson</title>
-  <link rel="icon" href="images.png" type="image/png">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    :root {
-      --bg: #0b0b0b;
-      --panel: #151515;
-      --panel2: #202020;
-      --text: #f5f5f5;
-      --muted: #a3a3a3;
-      --accent: #e53935;
-      --border: #303030;
-      --green: #38b66b;
+async function saveBlogPost(event) {
+  event.preventDefault();
+
+  const title = document.getElementById("blogTitle").value.trim();
+  const category = document.getElementById("blogCategory").value.trim();
+  const tags = document.getElementById("blogTags").value
+    .split(",")
+    .map(tag => tag.trim())
+    .filter(Boolean);
+  const excerpt = document.getElementById("blogExcerpt").value.trim();
+
+  // Correct database column: cover_image
+  const cover_image =
+    document.getElementById("blogCover").value.trim() || null;
+
+  const content = document.getElementById("blogContent").value.trim();
+  const status = document.getElementById("blogStatus").value;
+  const dateValue = document.getElementById("blogDate").value;
+  const editId = document.getElementById("blogEditId").value;
+
+  if (!title || !category || !excerpt || !content) {
+    showNotice("Complete all required article fields.", "error");
+    return;
+  }
+
+  const slugBase = blogSlugify(title);
+
+  if (!slugBase) {
+    showNotice("Enter a valid article title.", "error");
+    return;
+  }
+
+  let slug = slugBase;
+
+  if (!editId) {
+    slug = `${slugBase}-${Date.now().toString(36)}`;
+  }
+
+  if (status === "scheduled" && !dateValue) {
+    showNotice("Choose a publication date.", "error");
+    return;
+  }
+
+  let dateIso = null;
+
+  if (dateValue) {
+    const parsed = new Date(dateValue);
+
+    if (Number.isNaN(parsed.getTime())) {
+      showNotice("The publication date is invalid.", "error");
+      return;
     }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0; background: var(--bg); color: var(--text);
-      font: 15px/1.5 system-ui, -apple-system, Segoe UI, sans-serif;
-    }
-    button, input, textarea, select { font: inherit; }
-    button {
-      cursor: pointer; border: 0; border-radius: 9px;
-      padding: 10px 14px; color: white; background: var(--accent);
-    }
-    button.secondary { background: var(--panel2); border: 1px solid var(--border); }
-    button.danger { background: #922d2d; }
-    button:disabled { opacity: .55; cursor: not-allowed; }
-    input, textarea, select {
-      width: 100%; padding: 11px; border-radius: 8px;
-      background: #101010; border: 1px solid var(--border); color: var(--text);
-    }
-    textarea { min-height: 130px; resize: vertical; }
-    label { display: block; margin: 12px 0 6px; color: var(--muted); }
-    h1, h2, h3 { line-height: 1.2; }
-    h1 { font-size: clamp(25px, 4vw, 34px); }
-    h2 { font-size: 21px; }
-    .muted { color: var(--muted); }
-    .hidden { display: none !important; }
-    .layout { display: grid; grid-template-columns: 245px minmax(0, 1fr); min-height: 100vh; }
-    aside {
-      background: #101010; border-right: 1px solid var(--border);
-      padding: 22px 14px; position: sticky; top: 0; height: 100vh; overflow-y: auto;
-    }
-    .brand { padding: 8px 10px 20px; font-size: 18px; font-weight: 750; }
-    .brand span { color: var(--accent); }
-    .nav { display: grid; gap: 6px; }
-    .nav button {
-      text-align: left; background: transparent; color: #ccc;
-      border: 1px solid transparent;
-    }
-    .nav button.active, .nav button:hover {
-      background: #242424; color: white; border-color: var(--border);
-    }
-    main { padding: 26px; max-width: 1500px; width: 100%; margin: auto; }
-    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
-    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 22px 0; }
-    .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 18px; min-width: 0; }
-    .metric { font-size: 30px; font-weight: 750; margin-top: 8px; }
-    .section { margin-top: 22px; }
-    .section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-    .full { grid-column: 1 / -1; }
-    .item { border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin: 12px 0; background: #111; }
-    .item-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-    .item p { white-space: pre-wrap; overflow-wrap: anywhere; }
-    .pill { display: inline-block; font-size: 12px; padding: 4px 8px; border-radius: 999px; background: #292929; color: #ddd; }
-    .pill.green { color: #9ae6b4; background: #143322; }
-    .pill.red { color: #ffb4b4; background: #401a1a; }
-    .notice { padding: 12px 14px; border: 1px solid var(--border); border-radius: 9px; margin: 12px 0; }
-    .notice.error { border-color: #8d3030; color: #ffb8b8; }
-    .notice.success { border-color: #246c41; color: #a5f0bd; }
-    .login-wrap { min-height: 100vh; display: grid; place-items: center; padding: 20px; }
-    .login { width: min(440px, 100%); }
-    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
-    .search { max-width: 380px; }
-    .empty { padding: 35px 15px; text-align: center; color: var(--muted); }
-    .status { color: var(--muted); font-size: 13px; }
-    .reply-box { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
-    .toast { position: fixed; bottom: 20px; right: 20px; max-width: 360px; z-index: 20; }
-    @media (max-width: 900px) {
-      .layout { grid-template-columns: 1fr; }
-      aside { position: static; height: auto; padding: 12px; border-right: 0; border-bottom: 1px solid var(--border); }
-      .nav { display: flex; overflow-x: auto; padding-bottom: 5px; }
-      .nav button { white-space: nowrap; }
-      main { padding: 18px; }
-      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-    @media (max-width: 520px) {
-      .grid, .form-grid { grid-template-columns: 1fr; }
-      .full { grid-column: auto; }
-      main { padding: 14px; }
-    }
-  </style>
-</head>
-<body>
-  <div id="loginView" class="login-wrap">
-    <form id="loginForm" class="card login">
-      <div class="brand">WEBSITE <span>ADGOOT</span></div>
-      <h1>Admin sign in</h1>
-      <p class="muted">Sign in with your authorized Supabase admin account.</p>
-      <label for="email">Email</label>
-      <input id="email" type="email" autocomplete="username" required>
-      <label for="password">Password</label>
-      <input id="password" type="password" autocomplete="current-password" required>
-      <div class="toolbar"><button type="submit" id="loginButton">Sign in</button></div>
-      <div id="loginNotice" aria-live="polite"></div>
-    </form>
-  </div>
 
-  <div id="appView" class="layout hidden">
-    <aside>
-      <div class="brand">WEBSITE <span>ADGOOT</span></div>
-      <p class="muted" style="padding:0 10px">David Agootson · Admin</p>
-      <nav class="nav" id="navigation">
-        <button class="active" data-page="overview">◈ Overview</button>
-        <button data-page="articles">✎ Articles</button>
-        <button data-page="comments">☷ Gallery comments</button>
-        <button data-page="messages">✉ Contact messages</button>
-        <button data-page="subscribers">◎ Subscribers</button>
-        <button data-page="settings">⚙ Settings & tools</button>
-      </nav>
-      <div class="section">
-        <button class="secondary" id="refreshButton" style="width:100%">↻ Refresh data</button>
-        <button class="secondary" id="logoutButton" style="width:100%;margin-top:8px">Sign out</button>
-      </div>
-      <p class="status">Session: <span id="sessionStatus">Checking…</span></p>
-    </aside>
+    dateIso = parsed.toISOString();
+  }
 
-    <main>
-      <div class="topbar">
-        <div>
-          <p class="muted">ADMINISTRATION</p>
-          <h1 id="pageTitle">Overview</h1>
-        </div>
-        <div class="actions">
-          <input id="globalSearch" class="search" placeholder="Search loaded content…" aria-label="Search content">
-          <button class="secondary" id="exportButton">Export data</button>
-        </div>
-      </div>
-      <div id="globalNotice" aria-live="polite"></div>
+  const { data: { user } } = await supabaseClient.auth.getUser();
 
-      <section id="page-overview" class="page">
-        <div class="grid">
-          <div class="card"><div class="muted">Articles</div><div class="metric" id="metricArticles">—</div><div class="status">Loaded from Supabase</div></div>
-          <div class="card"><div class="muted">Gallery comments</div><div class="metric" id="metricComments">—</div><div class="status">Loaded from Supabase</div></div>
-          <div class="card"><div class="muted">Messages</div><div class="metric" id="metricMessages">—</div><div class="status">Loaded from Supabase</div></div>
-          <div class="card"><div class="muted">Subscribers</div><div class="metric" id="metricSubscribers">—</div><div class="status">Loaded from Supabase</div></div>
-        </div>
-        <div class="card">
-          <h2>Quick actions</h2>
-          <p class="muted">Publish an article or respond to a gallery comment without navigating through extra menus.</p>
-          <div class="toolbar">
-            <button id="quickNewArticle">＋ New article</button>
-            <button class="secondary" id="quickComments">Reply to comments</button>
-            <button class="secondary" id="quickMessages">Open messages</button>
-          </div>
-        </div>
-        <div class="card section">
-          <h2>Publishing checklist</h2>
-          <p>1. Open Articles and create your post.</p>
-          <p>2. Select <b>Publish Now</b> to save it as published immediately.</p>
-          <p>3. Ensure your public blog page queries published records from the same Supabase table.</p>
-          <p>4. Open Gallery comments to post admin replies to visitors.</p>
-        </div>
-      </section>
+  currentBlogUser = user || currentBlogUser;
 
-      <section id="page-articles" class="page hidden">
-        <div class="card">
-          <div class="section-head">
-            <div><h2 id="articleFormTitle">Write an article</h2><p class="muted">Publish immediately or save a draft.</p></div>
-            <button class="secondary" id="newArticleButton">＋ New article</button>
-          </div>
-          <form id="articleForm">
-            <input type="hidden" id="articleId">
-            <div class="form-grid">
-              <div class="full"><label for="articleTitle">Title *</label><input id="articleTitle" required maxlength="200" placeholder="Article title"></div>
-              <div><label for="articleSlug">URL slug</label><input id="articleSlug" placeholder="my-new-article"></div>
-              <div><label for="articleCategory">Category</label><input id="articleCategory" placeholder="Technology, Blog…"></div>
-              <div class="full"><label for="articleExcerpt">Excerpt</label><textarea id="articleExcerpt" style="min-height:75px" placeholder="A short summary for the blog listing"></textarea></div>
-              <div class="full"><label for="articleContent">Article content *</label><textarea id="articleContent" required style="min-height:300px" placeholder="Write your article here…"></textarea></div>
-              <div><label for="articleImage">Featured image URL (optional)</label><input id="articleImage" type="url" placeholder="https://…"></div>
-              <div><label for="articleStatus">Status</label><select id="articleStatus"><option value="published">Publish Now</option><option value="draft">Save as Draft</option></select></div>
-            </div>
-            <div class="toolbar">
-              <button type="submit" id="publishButton">Publish Now</button>
-              <button type="button" class="secondary" id="saveDraftButton">Save Draft</button>
-              <button type="button" class="secondary" id="clearArticleButton">Clear form</button>
-            </div>
-            <p class="status">The article is saved to your configured Supabase table. Public visibility depends on your blog page and database policies.</p>
-          </form>
-        </div>
-        <div class="section">
-          <div class="section-head"><h2>Existing articles</h2><button class="secondary" id="reloadArticlesButton">Reload articles</button></div>
-          <div id="articlesList"><div class="empty">Loading articles…</div></div>
-        </div>
-      </section>
-
-      <section id="page-comments" class="page hidden">
-        <div class="card">
-          <h2>Gallery comment moderation</h2>
-          <p class="muted">Approve comments and reply as the site administrator.</p>
-          <div class="toolbar">
-            <select id="commentFilter" style="max-width:220px">
-              <option value="all">All comments</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-            </select>
-            <button class="secondary" id="reloadCommentsButton">Reload comments</button>
-          </div>
-          <div id="commentsList"><div class="empty">Loading comments…</div></div>
-        </div>
-      </section>
-
-      <section id="page-messages" class="page hidden">
-        <div class="card">
-          <h2>Contact messages</h2>
-          <div class="toolbar">
-            <select id="messageFilter" style="max-width:220px">
-              <option value="all">All messages</option>
-              <option value="new">New</option>
-              <option value="read">Read</option>
-              <option value="replied">Replied</option>
-            </select>
-            <button class="secondary" id="reloadMessagesButton">Reload messages</button>
-          </div>
-          <div id="messagesList"><div class="empty">Loading messages…</div></div>
-        </div>
-      </section>
-
-      <section id="page-subscribers" class="page hidden">
-        <div class="card">
-          <div class="section-head"><h2>Newsletter subscribers</h2><button class="secondary" id="exportSubscribersButton">Export CSV</button></div>
-          <div id="subscribersList"><div class="empty">Loading subscribers…</div></div>
-        </div>
-      </section>
-
-      <section id="page-settings" class="page hidden">
-        <div class="grid">
-          <div class="card"><h3>Session</h3><p class="muted">The dashboard signs out locally after five minutes of inactivity. Configure stronger session controls in Supabase Auth for server-side protection.</p><button class="secondary" id="forceLogoutButton">Sign out now</button></div>
-          <div class="card"><h3>Data export</h3><p class="muted">Export records currently loaded into this browser.</p><button id="settingsExportButton">Download JSON backup</button></div>
-          <div class="card"><h3>Keyboard shortcut</h3><p class="muted">Use Ctrl/⌘ + K to focus global search.</p><button class="secondary" id="focusSearchButton">Focus search</button></div>
-          <div class="card"><h3>Admin safety</h3><p class="muted">Use a dedicated admin account and restrictive row-level security policies. Never put a service-role key in this HTML.</p></div>
-        </div>
-      </section>
-    </main>
-  </div>
-  <div id="toast" class="toast"></div>
-
-<script>
-(() => {
-  "use strict";
-
-  // This is the Supabase publishable/anon key. Never put a service-role key in client HTML.
-  const SUPABASE_URL = "https://jxfrevwvpyxbljfkrhyo.supabase.co";
-  const SUPABASE_KEY = "sb_publishable_dEtGqJaPQmhdgiGgkMwQRw_LI6Itzwo";
-
-  // IMPORTANT: align these names and fields with your existing database schema.
-  const TABLES = {
-    articles: "blog_posts",
-    comments: "comments",
-    replies: "comment_replies",
-    messages: "contact_messages",
-    subscribers: "newsletter_subscribers"
+  const payload = {
+    title,
+    slug,
+    excerpt,
+    content,
+    cover_image,
+    category,
+    tags,
+    status,
+    published_at:
+      status === "published"
+        ? (dateIso || new Date().toISOString())
+        : null,
+    scheduled_at:
+      status === "scheduled" ? dateIso : null,
+    author_id: currentBlogUser?.id || null
   };
 
-  const $ = id => document.getElementById(id);
-  const state = {
-    client: null, user: null, articles: [], comments: [],
-    replies: [], messages: [], subscribers: [], sessionTimer: null
-  };
+  if (editId) {
+    const existing = blogPosts.find(post => post.id === editId);
 
-  function escapeHtml(value) {
-    return String(value ?? "").replace(/[&<>"']/g, ch => ({
-      "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
-    })[ch]);
-  }
-
-  function notify(message, type = "") {
-    $("toast").innerHTML = `<div class="card ${type}" role="status">${escapeHtml(message)}</div>`;
-    window.setTimeout(() => { $("toast").innerHTML = ""; }, 4500);
-  }
-
-  function setNotice(id, message, type = "") {
-    $(id).innerHTML = message ? `<div class="notice ${type}">${escapeHtml(message)}</div>` : "";
-  }
-
-  function hasConfig() {
-    return SUPABASE_KEY && !SUPABASE_KEY.includes("YOUR_SUPABASE");
-  }
-
-  function slugify(value) {
-    return value.toLowerCase().trim().normalize("NFKD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-  }
-
-  function firstValue(row, keys, fallback = "") {
-    for (const key of keys) if (row && row[key] != null) return row[key];
-    return fallback;
-  }
-
-  function articleStatus(row) {
-    return firstValue(row, ["status", "publication_status"], row.published_at ? "published" : "draft");
-  }
-
-  function isPublished(row) {
-    return ["published", "published_at"].includes(String(articleStatus(row)).toLowerCase()) ||
-      Boolean(row.published === true);
-  }
-
-  async function queryTable(table, orderColumn = "created_at") {
-    const { data, error } = await state.client.from(table).select("*").order(orderColumn, { ascending: false });
-    if (error) throw error;
-    return data || [];
-  }
-
-  async function safeLoad(table, orderColumn) {
-    try { return await queryTable(table, orderColumn); }
-    catch (error) {
-      console.warn(`Could not load ${table}:`, error.message);
-      return [];
-    }
-  }
-
-  function navigate(page) {
-    document.querySelectorAll(".page").forEach(el => el.classList.add("hidden"));
-    $("page-" + page)?.classList.remove("hidden");
-    document.querySelectorAll("#navigation button").forEach(btn => btn.classList.toggle("active", btn.dataset.page === page));
-    const titles = { overview: "Overview", articles: "Articles", comments: "Gallery comments", messages: "Contact messages", subscribers: "Subscribers", settings: "Settings & tools" };
-    $("pageTitle").textContent = titles[page] || "Admin";
-  }
-
-  async function refreshAll() {
-    if (!state.client) return;
-    $("sessionStatus").textContent = "Refreshing…";
-    const [articles, comments, messages, subscribers, replies] = await Promise.all([
-      safeLoad(TABLES.articles, "created_at"),
-      safeLoad(TABLES.comments, "created_at"),
-      safeLoad(TABLES.messages, "created_at"),
-      safeLoad(TABLES.subscribers, "created_at"),
-      safeLoad(TABLES.replies, "created_at")
-    ]);
-    state.articles = articles;
-    state.comments = comments;
-    state.messages = messages;
-    state.subscribers = subscribers;
-    state.replies = replies;
-    renderAll();
-    $("sessionStatus").textContent = "Signed in";
-  }
-
-  function renderAll() {
-    $("metricArticles").textContent = state.articles.length;
-    $("metricComments").textContent = state.comments.length;
-    $("metricMessages").textContent = state.messages.length;
-    $("metricSubscribers").textContent = state.subscribers.length;
-    renderArticles();
-    renderComments();
-    renderMessages();
-    renderSubscribers();
-  }
-
-  function matchesSearch(row) {
-    const q = $("globalSearch").value.trim().toLowerCase();
-    return !q || JSON.stringify(row).toLowerCase().includes(q);
-  }
-
-  function renderArticles() {
-    const rows = state.articles.filter(matchesSearch);
-    if (!rows.length) {
-      $("articlesList").innerHTML = '<div class="empty">No articles loaded. Create your first article above.</div>';
-      return;
-    }
-    $("articlesList").innerHTML = rows.map(row => {
-      const title = firstValue(row, ["title", "name"], "Untitled");
-      const status = articleStatus(row);
-      return `<article class="item">
-        <div class="item-head"><div><h3>${escapeHtml(title)}</h3><span class="pill ${String(status).toLowerCase() === "published" ? "green" : ""}">${escapeHtml(status)}</span></div>
-        <div class="actions"><button class="secondary" data-edit-article="${escapeHtml(row.id)}">Edit</button>
-        ${String(status).toLowerCase() === "published" ? "" : `<button data-publish-article="${escapeHtml(row.id)}">Publish</button>`}
-        <button class="danger" data-delete-article="${escapeHtml(row.id)}">Delete</button></div></div>
-        <p class="muted">${escapeHtml(firstValue(row, ["excerpt", "summary"], ""))}</p>
-      </article>`;
-    }).join("");
-  }
-
-  function renderComments() {
-    const filter = $("commentFilter").value;
-    const rows = state.comments.filter(row => matchesSearch(row) &&
-      (filter === "all" || String(firstValue(row, ["status"], "pending")).toLowerCase() === filter));
-    if (!rows.length) {
-      $("commentsList").innerHTML = '<div class="empty">No comments match this filter.</div>';
-      return;
-    }
-    $("commentsList").innerHTML = rows.map(row => {
-      const id = row.id;
-      const status = String(firstValue(row, ["status"], "pending")).toLowerCase();
-      const reply = state.replies.find(r => String(r.comment_id) === String(id));
-      const author = firstValue(row, ["name", "author_name", "username"], "Visitor");
-      const body = firstValue(row, ["comment", "content", "message", "text"], "");
-      return `<article class="item">
-        <div class="item-head"><div><h3>${escapeHtml(author)}</h3><span class="pill ${status === "approved" ? "green" : status === "rejected" ? "red" : ""}">${escapeHtml(status)}</span></div>
-        <div class="actions">
-          ${status !== "approved" ? `<button data-comment-status="approved" data-comment-id="${escapeHtml(id)}">Approve</button>` : ""}
-          ${status !== "rejected" ? `<button class="secondary" data-comment-status="rejected" data-comment-id="${escapeHtml(id)}">Reject</button>` : ""}
-          <button data-reply-id="${escapeHtml(id)}">Reply as Admin</button>
-        </div></div>
-        <p>${escapeHtml(body)}</p>
-        ${reply ? `<div class="reply-box"><b>David Agootson · Admin reply</b><p>${escapeHtml(reply.reply)}</p><button class="secondary" data-reply-id="${escapeHtml(id)}">Edit reply</button></div>` : ""}
-        <div class="reply-box hidden" id="reply-box-${escapeHtml(id)}">
-          <label for="reply-text-${escapeHtml(id)}">Your public reply</label>
-          <textarea id="reply-text-${escapeHtml(id)}" placeholder="Write a respectful reply…">${escapeHtml(reply?.reply || "")}</textarea>
-          <div class="toolbar"><button data-save-reply="${escapeHtml(id)}">Save reply</button><button class="secondary" data-cancel-reply="${escapeHtml(id)}">Cancel</button></div>
-        </div>
-      </article>`;
-    }).join("");
-  }
-
-  function renderMessages() {
-    const filter = $("messageFilter").value;
-    const rows = state.messages.filter(row => matchesSearch(row) &&
-      (filter === "all" || String(firstValue(row, ["status"], "new")).toLowerCase() === filter));
-    if (!rows.length) {
-      $("messagesList").innerHTML = '<div class="empty">No messages match this filter.</div>';
-      return;
-    }
-    $("messagesList").innerHTML = rows.map(row => `<article class="item">
-      <div class="item-head"><div><h3>${escapeHtml(firstValue(row, ["name", "sender_name"], "Visitor"))}</h3>
-      <p class="muted">${escapeHtml(firstValue(row, ["email"], ""))}</p></div>
-      <span class="pill">${escapeHtml(firstValue(row, ["status"], "new"))}</span></div>
-      <p>${escapeHtml(firstValue(row, ["message", "content", "body"], ""))}</p>
-      <div class="toolbar"><button class="secondary" data-message-read="${escapeHtml(row.id)}">Mark read</button>
-      <button data-message-reply="${escapeHtml(row.id)}">Reply by email</button></div>
-    </article>`).join("");
-  }
-
-  function renderSubscribers() {
-    const rows = state.subscribers.filter(matchesSearch);
-    $("subscribersList").innerHTML = rows.length ? rows.map(row => `<article class="item">
-      <b>${escapeHtml(firstValue(row, ["email"], "No email"))}</b>
-      <p class="muted">${escapeHtml(firstValue(row, ["status"], "subscribed"))}</p>
-    </article>`).join("") : '<div class="empty">No subscribers loaded.</div>';
-  }
-
-  function resetArticleForm() {
-    $("articleForm").reset();
-    $("articleId").value = "";
-    $("articleStatus").value = "published";
-    $("articleFormTitle").textContent = "Write an article";
-    $("publishButton").textContent = "Publish Now";
-  }
-
-  function fillArticleForm(row) {
-    $("articleId").value = row.id || "";
-    $("articleTitle").value = firstValue(row, ["title", "name"], "");
-    $("articleSlug").value = firstValue(row, ["slug"], "");
-    $("articleCategory").value = firstValue(row, ["category"], "");
-    $("articleExcerpt").value = firstValue(row, ["excerpt", "summary"], "");
-    $("articleContent").value = firstValue(row, ["content", "body", "html"], "");
-    $("articleImage").value = firstValue(row, ["featured_image", "image_url", "cover_image"], "");
-    $("articleStatus").value = isPublished(row) ? "published" : "draft";
-    $("articleFormTitle").textContent = "Edit article";
-    $("publishButton").textContent = "Save and Publish";
-    navigate("articles");
-    $("articleTitle").focus();
-  }
-
-  // Change this payload if your blog_posts table uses different column names.
-  function buildArticlePayload(status) {
-    const title = $("articleTitle").value.trim();
-    const content = $("articleContent").value.trim();
-    if (!title || !content) throw new Error("Title and article content are required.");
-    const slug = $("articleSlug").value.trim() || slugify(title);
-    const published = status === "published";
-    return {
-      title,
-      slug,
-      category: $("articleCategory").value.trim() || null,
-      excerpt: $("articleExcerpt").value.trim() || null,
-      content,
-      featured_image: $("articleImage").value.trim() || null,
-      status,
-      published,
-      published_at: published ? new Date().toISOString() : null
-    };
-  }
-
-  async function saveArticle(status) {
-    if (!state.client) throw new Error("Supabase is not configured.");
-    const id = $("articleId").value;
-    const payload = buildArticlePayload(status);
-    const button = status === "published" ? $("publishButton") : $("saveDraftButton");
-    button.disabled = true;
-    button.textContent = status === "published" ? "Publishing…" : "Saving…";
-    try {
-      let result;
-      if (id) result = await state.client.from(TABLES.articles).update(payload).eq("id", id).select().single();
-      else result = await state.client.from(TABLES.articles).insert(payload).select().single();
-      if (result.error) throw result.error;
-      notify(status === "published" ? "Article published in Supabase." : "Draft saved.", "success");
-      resetArticleForm();
-      await refreshAll();
-    } finally {
-      button.disabled = false;
-      button.textContent = status === "published" ? "Publish Now" : "Save Draft";
-    }
-  }
-
-  async function updateArticleStatus(id, status) {
-    const payload = {
-      status,
-      published: status === "published",
-      published_at: status === "published" ? new Date().toISOString() : null
-    };
-    const { error } = await state.client.from(TABLES.articles).update(payload).eq("id", id);
-    if (error) throw error;
-    notify(status === "published" ? "Article published." : "Article updated.", "success");
-    await refreshAll();
-  }
-
-  async function deleteArticle(id) {
-    if (!confirm("Permanently delete this article?")) return;
-    const { error } = await state.client.from(TABLES.articles).delete().eq("id", id);
-    if (error) throw error;
-    notify("Article deleted.", "success");
-    await refreshAll();
-  }
-
-  async function updateCommentStatus(id, status) {
-    const { error } = await state.client.from(TABLES.comments).update({ status }).eq("id", id);
-    if (error) throw error;
-    notify(`Comment ${status}.`, "success");
-    await refreshAll();
-  }
-
-  async function saveCommentReply(id) {
-    const text = $(`reply-text-${id}`).value.trim();
-    if (!text) throw new Error("Please write a reply first.");
-    const existing = state.replies.find(r => String(r.comment_id) === String(id));
-    const payload = {
-      comment_id: id,
-      reply: text,
-      admin_id: state.user?.id || null,
-      updated_at: new Date().toISOString()
-    };
-    let result;
     if (existing) {
-      result = await state.client.from(TABLES.replies).update(payload).eq("comment_id", id);
+      payload.slug = existing.slug;
+      payload.author_id =
+        existing.author_id || currentBlogUser?.id || null;
+    }
+  }
+
+  const saveButton = document.getElementById("saveBlogPost");
+  saveButton.disabled = true;
+
+  setStatus(
+    document.getElementById("blogEditorStatus"),
+    "Saving article to Supabase..."
+  );
+
+  try {
+    let result;
+
+    if (editId) {
+      result = await supabaseClient
+        .from("blog_posts")
+        .update(payload)
+        .eq("id", editId)
+        .select()
+        .single();
     } else {
-      result = await state.client.from(TABLES.replies).insert(payload);
+      result = await supabaseClient
+        .from("blog_posts")
+        .insert(payload)
+        .select()
+        .single();
     }
+
     if (result.error) throw result.error;
-    notify("Admin reply saved.", "success");
-    await refreshAll();
+
+    showNotice(
+      status === "published"
+        ? "Article published successfully!"
+        : status === "scheduled"
+          ? "Article scheduled successfully!"
+          : "Draft saved successfully!",
+      "success"
+    );
+
+    document.getElementById("blogEditId").value = "";
+    document.getElementById("blogEditor").reset();
+
+    await loadBlogPosts();
+
+  } catch (error) {
+    console.error("Article save error:", error);
+
+    showNotice(
+      "Could not save article: " + error.message,
+      "error"
+    );
+
+  } finally {
+    saveButton.disabled = false;
+    saveButton.innerHTML =
+      '<i class="fa-solid fa-cloud-arrow-up"></i> Publish Article';
   }
-
-  async function markMessageRead(id) {
-    const { error } = await state.client.from(TABLES.messages).update({ status: "read" }).eq("id", id);
-    if (error) throw error;
-    notify("Message marked as read.");
-    await refreshAll();
-  }
-
-  function exportJson() {
-    const data = {
-      exported_at: new Date().toISOString(),
-      articles: state.articles, comments: state.comments,
-      replies: state.replies, messages: state.messages, subscribers: state.subscribers
-    };
-    downloadFile("adgoot-admin-backup.json", JSON.stringify(data, null, 2), "application/json");
-  }
-
-  function exportSubscribersCsv() {
-    const rows = state.subscribers;
-    const csv = ["email,status,created_at", ...rows.map(r => [
-      r.email || "", r.status || "", r.created_at || ""
-    ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(","))].join("\r\n");
-    downloadFile("newsletter-subscribers.csv", csv, "text/csv;charset=utf-8");
-  }
-
-  function downloadFile(name, content, type) {
-    const blob = new Blob([content], { type });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = name; a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  function startSessionTimer() {
-    clearTimeout(state.sessionTimer);
-    $("sessionStatus").textContent = "Active";
-    state.sessionTimer = setTimeout(() => signOut(true), 5 * 60 * 1000);
-  }
-
-  async function signOut(expired = false) {
-    clearTimeout(state.sessionTimer);
-    if (state.client) await state.client.auth.signOut();
-    state.user = null;
-    $("appView").classList.add("hidden");
-    $("loginView").classList.remove("hidden");
-    if (expired) setNotice("loginNotice", "You were signed out after five minutes. Please sign in again.");
-  }
-
-  async function initializeApp() {
-    if (!hasConfig()) {
-      setNotice("loginNotice", "Add your Supabase publishable/anon key in SUPABASE_KEY near the bottom of this file.", "error");
-      return;
-    }
-    state.client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    const { data, error } = await state.client.auth.getSession();
-    if (error) console.warn(error.message);
-    if (data?.session) await showApp(data.session.user);
-  }
-
-  async function showApp(user) {
-    state.user = user;
-    $("loginView").classList.add("hidden");
-    $("appView").classList.remove("hidden");
-    startSessionTimer();
-    await refreshAll();
-  }
-
-  async function runAction(action) {
-    try { await action(); }
-    catch (error) {
-      console.error(error);
-      notify(error.message || "Something went wrong. Check your database schema and RLS policies.");
-    }
-  }
-
-  $("loginForm").addEventListener("submit", async event => {
-    event.preventDefault();
-    if (!hasConfig()) {
-      setNotice("loginNotice", "Configure SUPABASE_KEY first.", "error");
-      return;
-    }
-    $("loginButton").disabled = true;
-    setNotice("loginNotice", "Signing in…");
-    try {
-      if (!state.client) state.client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-      const { data, error } = await state.client.auth.signInWithPassword({
-        email: $("email").value.trim(), password: $("password").value
-      });
-      if (error) throw error;
-      setNotice("loginNotice", "");
-      await showApp(data.user);
-    } catch (error) {
-      setNotice("loginNotice", error.message || "Sign-in failed.", "error");
-    } finally { $("loginButton").disabled = false; }
-  });
-
-  $("navigation").addEventListener("click", event => {
-    const btn = event.target.closest("[data-page]");
-    if (btn) navigate(btn.dataset.page);
-  });
-
-  $("articleForm").addEventListener("submit", event => {
-    event.preventDefault();
-    runAction(() => saveArticle($("articleStatus").value));
-  });
-  $("saveDraftButton").addEventListener("click", () => runAction(() => saveArticle("draft")));
-  $("newArticleButton").addEventListener("click", resetArticleForm);
-  $("clearArticleButton").addEventListener("click", resetArticleForm);
-  $("quickNewArticle").addEventListener("click", () => { navigate("articles"); resetArticleForm(); });
-  $("quickComments").addEventListener("click", () => navigate("comments"));
-  $("quickMessages").addEventListener("click", () => navigate("messages"));
-
-  $("articlesList").addEventListener("click", event => {
-    const edit = event.target.closest("[data-edit-article]");
-    const publish = event.target.closest("[data-publish-article]");
-    const del = event.target.closest("[data-delete-article]");
-    if (edit) {
-      const row = state.articles.find(r => String(r.id) === edit.dataset.editArticle);
-      if (row) fillArticleForm(row);
-    }
-    if (publish) runAction(() => updateArticleStatus(publish.dataset.publishArticle, "published"));
-    if (del) runAction(() => deleteArticle(del.dataset.deleteArticle));
-  });
-
-  $("commentsList").addEventListener("click", event => {
-    const statusBtn = event.target.closest("[data-comment-status]");
-    const replyBtn = event.target.closest("[data-reply-id]");
-    const saveBtn = event.target.closest("[data-save-reply]");
-    const cancelBtn = event.target.closest("[data-cancel-reply]");
-    if (statusBtn) runAction(() => updateCommentStatus(statusBtn.dataset.commentId, statusBtn.dataset.commentStatus));
-    if (replyBtn) {
-      const box = $(`reply-box-${replyBtn.dataset.replyId}`);
-      if (box) box.classList.toggle("hidden");
-    }
-    if (saveBtn) runAction(() => saveCommentReply(saveBtn.dataset.saveReply));
-    if (cancelBtn) {
-      const box = $(`reply-box-${cancelBtn.dataset.cancelReply}`);
-      if (box) box.classList.add("hidden");
-    }
-  });
-
-  $("messagesList").addEventListener("click", event => {
-    const read = event.target.closest("[data-message-read]");
-    const reply = event.target.closest("[data-message-reply]");
-    if (read) runAction(() => markMessageRead(read.dataset.messageRead));
-    if (reply) {
-      const row = state.messages.find(r => String(r.id) === reply.dataset.messageReply);
-      if (!row) return;
-      const email = firstValue(row, ["email"], "");
-      const subject = encodeURIComponent("Re: Your message to David Agootson");
-      window.location.href = `mailto:${encodeURIComponent(email)}?subject=${subject}`;
-    }
-  });
-
-  $("commentFilter").addEventListener("change", renderComments);
-  $("messageFilter").addEventListener("change", renderMessages);
-  $("globalSearch").addEventListener("input", renderAll);
-  $("refreshButton").addEventListener("click", () => runAction(refreshAll));
-  $("reloadArticlesButton").addEventListener("click", () => runAction(refreshAll));
-  $("reloadCommentsButton").addEventListener("click", () => runAction(refreshAll));
-  $("reloadMessagesButton").addEventListener("click", () => runAction(refreshAll));
-  $("exportButton").addEventListener("click", exportJson);
-  $("settingsExportButton").addEventListener("click", exportJson);
-  $("exportSubscribersButton").addEventListener("click", exportSubscribersCsv);
-  $("focusSearchButton").addEventListener("click", () => $("globalSearch").focus());
-  $("logoutButton").addEventListener("click", () => runAction(() => signOut(false)));
-  $("forceLogoutButton").addEventListener("click", () => runAction(() => signOut(false)));
-
-  document.addEventListener("keydown", event => {
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
-      event.preventDefault();
-      $("globalSearch").focus();
-    }
-    if (state.user) startSessionTimer();
-  });
-
-  ["click", "mousemove", "touchstart"].forEach(name => {
-    document.addEventListener(name, () => { if (state.user) startSessionTimer(); }, { passive: true });
-  });
-
-  state.client?.auth?.onAuthStateChange?.((_event, session) => {
-    if (session?.user && !state.user) showApp(session.user);
-  });
-
-  initializeApp();
-})();
-</script>
-</body>
-</html>
+}
