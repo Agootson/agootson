@@ -3,21 +3,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#e31b23">
-  <meta name="description" content="David Agootson's technical skills, Computer Science foundations, web development projects, and areas of continued learning.">
+  <meta name="description" content="David Agootson — Computer Science and Engineering student focused on web development, database-backed applications, and software engineering.">
   <meta name="author" content="David Agootson">
 
   <title>Technical Skills | David Agootson</title>
 
-  <!-- Favicon: images.png must be in the repository root -->
   <link rel="icon" type="image/png" href="images.png">
   <link rel="apple-touch-icon" href="images.png">
-
-  <meta property="og:title" content="Technical Skills | David Agootson">
-  <meta property="og:description" content="Explore David Agootson's technical skills, academic foundations, and practical web development experience.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://agootson.is-a.dev/skills.html">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,16 +20,16 @@
 
   <style>
     :root {
-      --bg: #f7f8fa;
-      --white: #ffffff;
-      --text: #171a1f;
-      --muted: #747981;
-      --line: #e7e9ed;
       --red: #e31b23;
-      --red-soft: #fff1f2;
       --red-dark: #b9151c;
-      --sidebar: 250px;
-      --sidebar-small: 78px;
+      --red-soft: #fff0f1;
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --text: #171a1f;
+      --muted: #666e79;
+      --line: #e5e7eb;
+      --sidebar-width: 248px;
+      --sidebar-collapsed: 76px;
       --radius: 12px;
     }
 
@@ -47,16 +41,15 @@
 
     html {
       scroll-behavior: smooth;
-      scroll-padding-top: 35px;
+      scroll-padding-top: 30px;
     }
 
     body {
-      min-height: 100vh;
       background: var(--bg);
       color: var(--text);
       font-family: Inter, Arial, sans-serif;
+      line-height: 1.65;
       overflow-x: hidden;
-      line-height: 1.6;
     }
 
     a {
@@ -64,84 +57,50 @@
       text-decoration: none;
     }
 
-    button,
-    input {
+    button {
       font: inherit;
     }
 
-    button:focus-visible,
-    a:focus-visible {
+    a:focus-visible,
+    button:focus-visible {
       outline: 3px solid var(--red);
-      outline-offset: 4px;
+      outline-offset: 3px;
     }
 
-    /* ================= SIDEBAR ================= */
+    /* Sidebar */
 
     .sidebar {
       position: fixed;
       inset: 0 auto 0 0;
       z-index: 1000;
-      width: var(--sidebar);
-      display: flex;
-      flex-direction: column;
-      padding: 30px 16px 22px;
-      background: var(--white);
+      width: var(--sidebar-width);
+      padding: 28px 15px 22px;
+      background: var(--surface);
       border-right: 1px solid var(--line);
-      transition: width .25s ease, transform .25s ease;
       overflow-y: auto;
+      transition: width .25s ease, transform .25s ease;
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 0 14px;
-      margin-bottom: 25px;
-      min-height: 42px;
-      font-size: .9rem;
+      min-height: 44px;
+      padding: 0 13px;
+      margin-bottom: 23px;
+      font-size: .88rem;
       font-weight: 800;
-      white-space: nowrap;
       letter-spacing: -.04em;
+      white-space: nowrap;
     }
 
-    .brand span {
+    .brand .accent {
       color: var(--red);
     }
 
-    .sidebar-profile {
-      padding: 10px 14px 22px;
-      margin-bottom: 12px;
+    .profile {
+      padding: 9px 13px 22px;
       color: var(--muted);
-      font-size: .8rem;
-      line-height: 1.7;
-    }
-
-    .collapse {
-      position: absolute;
-      top: 18px;
-      right: -19px;
-      width: 38px;
-      height: 38px;
-      display: grid;
-      place-items: center;
-      border: 0;
-      border-radius: 50%;
-      color: white;
-      background: var(--red);
-      cursor: pointer;
-      box-shadow: 0 8px 20px rgba(227, 27, 35, .18);
-      transition: .2s ease;
-    }
-
-    .collapse:hover {
-      background: var(--red-dark);
-      transform: scale(1.05);
-    }
-
-    .collapse span {
-      font-size: 1.5rem;
-      line-height: 1;
-      transform: translateY(-1px);
+      font-size: .76rem;
     }
 
     .nav {
@@ -151,69 +110,46 @@
     }
 
     .nav a {
-      position: relative;
-      min-height: 48px;
       display: flex;
       align-items: center;
-      gap: 17px;
-      padding: 10px 14px;
-      border-radius: 7px;
-      color: #72767d;
-      font-size: .79rem;
+      gap: 15px;
+      min-height: 46px;
+      padding: 10px 13px;
+      border-radius: 8px;
+      color: #646b75;
+      font-size: .78rem;
       font-weight: 600;
-      transition: background .18s ease, color .18s ease, transform .18s ease;
+      transition: background .2s ease, color .2s ease;
     }
 
-    .nav a:hover {
-      color: var(--red);
-      background: #fff5f5;
-      transform: translateX(2px);
-    }
-
+    .nav a:hover,
     .nav a.active {
-      color: var(--red);
       background: var(--red-soft);
-    }
-
-    .nav a.active::before {
-      content: "";
-      position: absolute;
-      left: -16px;
-      top: 8px;
-      bottom: 8px;
-      width: 4px;
-      border-radius: 0 4px 4px 0;
-      background: var(--red);
-    }
-
-    .icon {
-      width: 22px;
-      flex: 0 0 22px;
-      display: grid;
-      place-items: center;
-      color: #737982;
-      font-size: .95rem;
-      line-height: 1;
-      transition: color .18s ease, transform .18s ease;
-    }
-
-    .nav a:hover .icon {
-      transform: scale(1.06);
-    }
-
-    .nav a:hover .icon,
-    .nav a.active .icon {
       color: var(--red);
+    }
+
+    .nav-icon {
+      width: 21px;
+      flex: 0 0 21px;
+      text-align: center;
+    }
+
+    .collapse {
+      position: absolute;
+      top: 16px;
+      right: -18px;
+      z-index: 2;
+      width: 36px;
+      height: 36px;
+      border: none;
+      border-radius: 50%;
+      color: white;
+      background: var(--red);
+      cursor: pointer;
     }
 
     body.collapsed .sidebar {
-      width: var(--sidebar-small);
-    }
-
-    body.collapsed .nav-label,
-    body.collapsed .brand-text,
-    body.collapsed .sidebar-profile {
-      display: none;
+      width: var(--sidebar-collapsed);
     }
 
     body.collapsed .brand {
@@ -221,331 +157,384 @@
       padding-inline: 0;
     }
 
+    body.collapsed .brand-text,
+    body.collapsed .profile,
+    body.collapsed .nav-label {
+      display: none;
+    }
+
     body.collapsed .nav a {
       justify-content: center;
       padding-inline: 0;
     }
 
-    body.collapsed .collapse span {
-      transform: rotate(180deg);
-    }
-
-    /* ================= MAIN ================= */
+    /* Main layout */
 
     .main {
-      margin-left: var(--sidebar);
+      margin-left: var(--sidebar-width);
       transition: margin-left .25s ease;
     }
 
     body.collapsed .main {
-      margin-left: var(--sidebar-small);
+      margin-left: var(--sidebar-collapsed);
     }
 
     .container {
-      width: min(1120px, calc(100% - 72px));
+      width: min(1100px, calc(100% - 64px));
       margin-inline: auto;
     }
 
-    /* ================= PAGE HEADER ================= */
-
     .page {
-      min-height: calc(100vh - 180px);
-      padding: 86px 0 70px;
+      padding: 82px 0 65px;
     }
 
     .eyebrow {
-      margin-bottom: 14px;
+      margin-bottom: 13px;
       color: var(--red);
-      font-size: .66rem;
+      font-size: .67rem;
       font-weight: 800;
-      letter-spacing: .2em;
+      letter-spacing: .18em;
       text-transform: uppercase;
     }
 
-    .page h1 {
+    h1 {
       max-width: 850px;
-      font-size: clamp(2.8rem, 6vw, 5.2rem);
-      line-height: .98;
+      font-size: clamp(2.8rem, 6vw, 5rem);
+      line-height: 1.03;
       letter-spacing: -.075em;
     }
 
-    .page h1 span {
+    h1 .accent {
       color: var(--red);
     }
 
-    .lead {
-      max-width: 720px;
+    .intro {
+      max-width: 760px;
       margin-top: 20px;
       color: var(--muted);
       font-size: .9rem;
-      line-height: 1.9;
+      line-height: 1.95;
     }
 
     .section {
-      padding: 58px 0 10px;
+      margin-top: 64px;
     }
 
-    .section-title {
-      font-size: clamp(1.7rem, 3vw, 2.7rem);
-      line-height: 1.1;
+    .section-heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 20px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h2 {
+      font-size: clamp(1.55rem, 3vw, 2.25rem);
+      line-height: 1.2;
       letter-spacing: -.055em;
     }
 
-    .section-note {
-      max-width: 720px;
-      margin-top: 13px;
+    .section-description {
+      max-width: 650px;
+      margin-top: 9px;
       color: var(--muted);
-      font-size: .8rem;
+      font-size: .78rem;
       line-height: 1.9;
     }
-
-    /* ================= SKILL CARDS ================= */
 
     .grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 16px;
-      margin-top: 28px;
-    }
-
-    .grid.three {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-top: 22px;
     }
 
     .card {
       min-width: 0;
-      padding: 26px;
-      background: var(--white);
+      padding: 25px;
+      background: var(--surface);
       border: 1px solid var(--line);
       border-radius: var(--radius);
-      transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+      transition: border-color .2s ease, transform .2s ease,
+        box-shadow .2s ease;
     }
 
     .card:hover {
-      transform: translateY(-4px);
-      border-color: #f0c3c6;
-      box-shadow: 0 14px 35px rgba(18, 28, 45, .07);
+      border-color: #efb7bb;
+      transform: translateY(-3px);
+      box-shadow: 0 12px 28px rgba(22, 28, 39, .055);
+    }
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
     }
 
     .card-icon {
-      width: 42px;
-      height: 42px;
+      width: 43px;
+      height: 43px;
+      flex: 0 0 43px;
       display: grid;
       place-items: center;
       border-radius: 10px;
       background: var(--red-soft);
       color: var(--red);
-      margin-bottom: 17px;
-      font-size: 1.1rem;
+      font-size: 1.05rem;
     }
 
     .card h3 {
-      font-size: 1rem;
+      font-size: .96rem;
       line-height: 1.5;
-      letter-spacing: -.02em;
+    }
+
+    .card-subtitle {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: .68rem;
     }
 
     .card p {
-      margin-top: 10px;
+      margin-top: 15px;
       color: var(--muted);
-      font-size: .76rem;
+      font-size: .77rem;
       line-height: 1.9;
     }
 
-    .tags {
+    .tech-list {
       display: flex;
       flex-wrap: wrap;
       gap: 7px;
       margin-top: 17px;
     }
 
-    .tag {
-      padding: 7px 10px;
-      border-radius: 999px;
-      background: #f4f5f7;
-      color: #626770;
-      font-size: .64rem;
+    .tech {
+      padding: 6px 9px;
+      background: #f3f4f6;
+      color: #4f5661;
+      border-radius: 5px;
+      font-size: .65rem;
       font-weight: 700;
     }
 
-    .tag.red {
-      color: var(--red);
+    .tech.primary {
+      color: var(--red-dark);
       background: var(--red-soft);
     }
 
-    /* ================= EXPERIENCE NOTES ================= */
+    /* Project experience */
 
-    .note-panel {
-      margin-top: 26px;
-      padding: 25px;
-      border: 1px solid var(--line);
-      border-left: 4px solid var(--red);
-      border-radius: 0 10px 10px 0;
-      background: var(--white);
-    }
-
-    .note-panel h3 {
-      font-size: .95rem;
-      margin-bottom: 9px;
-    }
-
-    .note-panel p {
-      color: var(--muted);
-      font-size: .8rem;
-      line-height: 1.9;
-    }
-
-    .note-panel p + p {
-      margin-top: 10px;
-    }
-
-    /* ================= LEARNING ROADMAP ================= */
-
-    .roadmap {
-      margin-top: 25px;
-      display: grid;
-      gap: 0;
-    }
-
-    .roadmap-item {
+    .project-card {
+      padding: 24px 0;
       display: grid;
       grid-template-columns: 45px 1fr;
       gap: 16px;
-      padding: 20px 0;
       border-bottom: 1px solid var(--line);
     }
 
-    .roadmap-icon {
-      width: 40px;
-      height: 40px;
+    .project-icon {
+      width: 42px;
+      height: 42px;
       display: grid;
       place-items: center;
-      background: var(--red-soft);
       color: var(--red);
-      border-radius: 10px;
+      background: var(--red-soft);
+      border-radius: 9px;
     }
 
-    .roadmap-item h3 {
-      font-size: .9rem;
+    .project-card h3 {
+      font-size: .92rem;
     }
 
-    .roadmap-item p {
-      margin-top: 6px;
+    .project-card p {
+      margin-top: 7px;
       color: var(--muted);
-      font-size: .76rem;
-      line-height: 1.85;
+      font-size: .77rem;
+      line-height: 1.9;
     }
 
-    /* ================= CONTACT CTA ================= */
+    .project-card .tech-list {
+      margin-top: 11px;
+    }
+
+    .project-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 12px;
+      color: var(--red);
+      font-size: .72rem;
+      font-weight: 800;
+    }
+
+    .project-link:hover {
+      color: var(--red-dark);
+    }
+
+    /* Academic foundations */
+
+    .academic-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .academic-item {
+      display: flex;
+      gap: 12px;
+      padding: 17px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 9px;
+    }
+
+    .academic-item i {
+      margin-top: 3px;
+      color: var(--red);
+    }
+
+    .academic-item h3 {
+      font-size: .79rem;
+    }
+
+    .academic-item p {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: .7rem;
+      line-height: 1.8;
+    }
+
+    /* Professional summary */
+
+    .summary-panel {
+      margin-top: 24px;
+      padding: 26px;
+      background: #171a1f;
+      color: #ffffff;
+      border-radius: var(--radius);
+    }
+
+    .summary-panel h3 {
+      font-size: 1.1rem;
+    }
+
+    .summary-panel p {
+      max-width: 800px;
+      margin-top: 12px;
+      color: #c5c9d0;
+      font-size: .8rem;
+      line-height: 1.95;
+    }
+
+    .summary-panel .highlight {
+      color: #ff696f;
+    }
+
+    /* Contact */
 
     .cta {
-      margin-top: 45px;
-      padding: 30px;
-      background: var(--white);
+      margin-top: 62px;
+      padding: 29px;
+      background: var(--surface);
       border: 1px solid var(--line);
       border-radius: var(--radius);
     }
 
-    .cta h2 {
-      font-size: clamp(1.4rem, 3vw, 2rem);
-      letter-spacing: -.04em;
-    }
-
     .cta p {
-      max-width: 650px;
+      max-width: 680px;
       margin-top: 10px;
       color: var(--muted);
-      font-size: .8rem;
+      font-size: .79rem;
       line-height: 1.9;
     }
 
-    .btn {
-      width: fit-content;
+    .button {
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 9px;
-      margin-top: 18px;
-      border: 0;
-      border-radius: 8px;
-      padding: 12px 18px;
+      margin-top: 19px;
+      margin-right: 8px;
+      padding: 12px 17px;
       background: var(--red);
       color: white;
+      border: 1px solid var(--red);
+      border-radius: 7px;
       font-size: .72rem;
       font-weight: 800;
-      cursor: pointer;
-      transition: background .2s ease, transform .2s ease;
+      transition: background .2s ease;
     }
 
-    .btn:hover {
+    .button:hover {
       background: var(--red-dark);
-      transform: translateY(-2px);
     }
 
-    /* ================= FOOTER ================= */
+    .button.secondary {
+      background: var(--surface);
+      color: var(--text);
+      border-color: var(--line);
+    }
+
+    .button.secondary:hover {
+      color: var(--red);
+      border-color: var(--red);
+    }
+
+    /* Footer */
 
     footer {
-      width: min(1120px, calc(100% - 72px));
+      width: min(1100px, calc(100% - 64px));
       margin-inline: auto;
-      padding: 42px 0 28px;
-      display: grid;
-      grid-template-columns: 1fr;
-      justify-items: center;
-      align-items: center;
-      gap: 16px;
+      padding: 35px 0 24px;
       border-top: 1px solid var(--line);
+      text-align: center;
     }
 
     footer strong {
+      font-size: .86rem;
+    }
+
+    footer strong span {
       color: var(--red);
-      font-size: .9rem;
     }
 
     footer p {
-      margin-top: 4px;
-      color: #8b9098;
-      font-size: .62rem;
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: .66rem;
     }
 
     .socials {
-      width: 100%;
       display: flex;
-      justify-content: center;
-      align-items: center;
       flex-wrap: wrap;
-      gap: 7px;
-      justify-self: center;
-      margin-inline: auto;
+      justify-content: center;
+      gap: 9px;
+      margin-top: 19px;
     }
 
     .socials a {
-      width: 36px;
-      height: 36px;
+      width: 37px;
+      height: 37px;
       display: grid;
       place-items: center;
-      border: 1px solid #dfe2e7;
+      color: #616873;
+      background: var(--surface);
+      border: 1px solid var(--line);
       border-radius: 50%;
-      background: white;
-      color: #666d76;
-      font-size: .92rem;
-      transition: color .2s ease, background .2s ease,
-        border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+      transition: color .2s ease, border-color .2s ease,
+        background .2s ease, transform .2s ease;
     }
 
     .socials a:hover {
       color: var(--red);
       background: var(--red-soft);
-      border-color: #f2b9bd;
-      transform: translateY(-3px);
-      box-shadow: 0 8px 18px rgba(220, 38, 46, .12);
+      border-color: #efb7bb;
+      transform: translateY(-2px);
     }
 
-    .copyright {
-      text-align: center;
-      padding-top: 10px;
-    }
-
-    /* ================= MOBILE ================= */
+    /* Mobile navigation */
 
     .mobile-menu {
       display: none;
@@ -555,26 +544,11 @@
       display: none;
     }
 
-    @media (max-width: 1050px) {
-      :root {
-        --sidebar: 225px;
-      }
-
-      .container,
-      footer {
-        width: min(calc(100% - 48px), 900px);
-      }
-
-      .grid.three {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-    }
-
     @media (max-width: 900px) {
       .sidebar {
-        width: min(285px, 86vw);
+        width: min(285px, 85vw);
         transform: translateX(-105%);
-        box-shadow: 18px 0 45px rgba(18, 28, 45, .13);
+        box-shadow: 15px 0 35px rgba(0, 0, 0, .12);
       }
 
       .sidebar.open {
@@ -591,49 +565,47 @@
       }
 
       body.collapsed .sidebar {
-        width: min(285px, 86vw);
-      }
-
-      body.collapsed .nav-label,
-      body.collapsed .brand-text,
-      body.collapsed .sidebar-profile {
-        display: initial;
+        width: min(285px, 85vw);
       }
 
       body.collapsed .brand {
         justify-content: flex-start;
-        padding-inline: 14px;
+        padding-inline: 13px;
+      }
+
+      body.collapsed .brand-text,
+      body.collapsed .profile,
+      body.collapsed .nav-label {
+        display: initial;
       }
 
       body.collapsed .nav a {
         justify-content: flex-start;
-        padding-inline: 14px;
+        padding-inline: 13px;
       }
 
       .mobile-menu {
         position: fixed;
-        top: 14px;
-        left: 14px;
+        top: 13px;
+        left: 13px;
         z-index: 1100;
         width: 43px;
         height: 43px;
         display: flex;
         flex-direction: column;
-        justify-content: center;
         align-items: center;
+        justify-content: center;
         gap: 5px;
-        border: 0;
-        border-radius: 8px;
         background: var(--red);
+        border: none;
+        border-radius: 8px;
         cursor: pointer;
-        box-shadow: 0 8px 22px rgba(227, 27, 35, .18);
       }
 
       .mobile-menu span {
-        width: 18px;
+        width: 19px;
         height: 2px;
         background: white;
-        border-radius: 2px;
       }
 
       .backdrop {
@@ -641,7 +613,7 @@
         inset: 0;
         z-index: 900;
         display: block;
-        background: rgba(20, 27, 39, .35);
+        background: rgba(15, 20, 30, .4);
         opacity: 0;
         visibility: hidden;
         transition: .2s ease;
@@ -654,56 +626,43 @@
 
       .container,
       footer {
-        width: min(calc(100% - 34px), 720px);
+        width: min(760px, calc(100% - 36px));
       }
 
       .page {
-        padding: 90px 0 55px;
+        padding-top: 92px;
       }
 
-      .grid,
-      .grid.three {
+      .grid {
         grid-template-columns: 1fr;
       }
     }
 
-    @media (max-width: 600px) {
+    @media (max-width: 560px) {
       .container,
       footer {
         width: calc(100% - 28px);
       }
 
-      .page h1 {
-        font-size: clamp(2.65rem, 14vw, 4rem);
+      h1 {
+        font-size: clamp(2.7rem, 13vw, 4rem);
       }
 
-      .lead {
-        font-size: .8rem;
+      .academic-list {
+        grid-template-columns: 1fr;
       }
 
       .card {
-        padding: 22px;
+        padding: 20px;
       }
 
+      .summary-panel,
       .cta {
-        padding: 22px;
+        padding: 21px;
       }
 
-      footer {
-        grid-template-columns: 1fr;
-        text-align: center;
-      }
-    }
-
-    @media (max-width: 380px) {
-      .container,
-      footer {
-        width: calc(100% - 22px);
-      }
-
-      .mobile-menu {
-        top: 10px;
-        left: 10px;
+      .section {
+        margin-top: 49px;
       }
     }
 
@@ -720,558 +679,469 @@
 
 <body>
   <aside class="sidebar" id="sidebar">
-    <button class="collapse" id="collapse" aria-label="Collapse sidebar">
-      <span>‹</span>
-    </button>
+    <button class="collapse" id="collapse" type="button"
+      aria-label="Collapse navigation" aria-expanded="true">‹</button>
 
     <a class="brand" href="index.html" aria-label="David Agootson home">
-      <span class="brand-text">DAVID <span>AGOOTSON</span></span>
+      <span class="brand-text">DAVID <span class="accent">AGOOTSON</span></span>
     </a>
 
-    <div class="sidebar-profile">
-      Computer Science Student<br>
-      Web Development & Software
+    <div class="profile">
+      Computer Science &amp; Engineering
     </div>
 
     <nav class="nav" aria-label="Main navigation">
       <a href="index.html">
-        <span class="icon"><i class="fa-solid fa-house" aria-hidden="true"></i></span>
+        <span class="nav-icon"><i class="fa-solid fa-house"></i></span>
         <span class="nav-label">Home</span>
       </a>
 
-      <a href="blog.html">
-        <span class="icon"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i></span>
-        <span class="nav-label">Blog</span>
-      </a>
-
-      <a class="active" href="skills.html" aria-current="page">
-        <span class="icon"><i class="fa-solid fa-code" aria-hidden="true"></i></span>
-        <span class="nav-label">Skills</span>
-      </a>
-
-      <a href="gallery.html">
-        <span class="icon"><i class="fa-regular fa-images" aria-hidden="true"></i></span>
-        <span class="nav-label">Gallery</span>
-      </a>
-
-      <a href="project.html">
-        <span class="icon"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></span>
-        <span class="nav-label">Projects</span>
-      </a>
-
       <a href="services.html">
-        <span class="icon"><i class="fa-solid fa-briefcase" aria-hidden="true"></i></span>
+        <span class="nav-icon"><i class="fa-solid fa-briefcase"></i></span>
         <span class="nav-label">Services</span>
       </a>
 
+      <a href="project.html">
+        <span class="nav-icon"><i class="fa-solid fa-layer-group"></i></span>
+        <span class="nav-label">Projects</span>
+      </a>
+
+      <a href="skills.html" class="active" aria-current="page">
+        <span class="nav-icon"><i class="fa-solid fa-code"></i></span>
+        <span class="nav-label">Skills</span>
+      </a>
+
+      <a href="blog.html">
+        <span class="nav-icon"><i class="fa-regular fa-pen-to-square"></i></span>
+        <span class="nav-label">Blog</span>
+      </a>
+
+      <a href="gallery.html">
+        <span class="nav-icon"><i class="fa-regular fa-images"></i></span>
+        <span class="nav-label">Gallery</span>
+      </a>
+
       <a href="about.html">
-        <span class="icon"><i class="fa-regular fa-user" aria-hidden="true"></i></span>
+        <span class="nav-icon"><i class="fa-regular fa-user"></i></span>
         <span class="nav-label">About Me</span>
       </a>
 
       <a href="contact.html">
-        <span class="icon"><i class="fa-regular fa-paper-plane" aria-hidden="true"></i></span>
+        <span class="nav-icon"><i class="fa-regular fa-envelope"></i></span>
         <span class="nav-label">Contact Me</span>
       </a>
     </nav>
   </aside>
 
-  <button
-    class="mobile-menu"
-    id="mobileMenu"
-    aria-label="Open navigation"
-    aria-expanded="false"
-    aria-controls="sidebar"
-  >
-    <span></span>
-    <span></span>
-    <span></span>
+  <button class="mobile-menu" id="mobileMenu" type="button"
+    aria-label="Open navigation" aria-expanded="false" aria-controls="sidebar">
+    <span></span><span></span><span></span>
   </button>
 
   <div class="backdrop" id="backdrop"></div>
 
   <main class="main">
-    <section class="page container">
-      <div class="eyebrow">TECHNICAL SKILLS</div>
+    <div class="container page">
 
-      <h1>
-        What I know.<br>
-        What I am <span>building.</span>
-      </h1>
-
-      <p class="lead">
-        I am a Computer Science and Engineering student at Gujarat
-        Technological University. My skills come from academic study,
-        personal website development and experimenting with database-backed
-        applications. I focus on practical implementation while continuing
-        to strengthen my fundamentals.
-      </p>
-
-      <!-- ================= PRACTICAL DEVELOPMENT ================= -->
-
-      <section class="section" aria-labelledby="practicalSkills">
-        <div class="eyebrow">PRACTICAL DEVELOPMENT</div>
-        <h2 class="section-title" id="practicalSkills">Building for the web.</h2>
-
-        <p class="section-note">
-          These are the technologies and workflows I have worked with
-          through my personal websites and application projects.
+      <header>
+        <div class="eyebrow">Technical profile</div>
+        <h1>Skills backed by <span class="accent">real work.</span></h1>
+        <p class="intro">
+          I am a Computer Science and Engineering student at Gujarat
+          Technological University, developing practical experience through
+          personal web projects and database-backed applications. My work
+          combines frontend development, application integration, website
+          deployment and academic Computer Science foundations.
         </p>
+      </header>
+
+      <!-- Technical skills -->
+
+      <section class="section" id="technical-skills">
+        <div class="section-heading">
+          <div>
+            <div class="eyebrow">01 / Technical capabilities</div>
+            <h2>Technologies &amp; implementation</h2>
+            <p class="section-description">
+              Specific tools and development tasks relevant to my current
+              project work—not a list of unsupported expertise claims.
+            </p>
+          </div>
+        </div>
 
         <div class="grid">
           <article class="card">
-            <div class="card-icon">
-              <i class="fa-brands fa-html5" aria-hidden="true"></i>
+            <div class="card-top">
+              <div class="card-icon"><i class="fa-brands fa-html5"></i></div>
+              <div>
+                <h3>Frontend Development</h3>
+                <div class="card-subtitle">Web interfaces and interactions</div>
+              </div>
             </div>
-            <h3>Frontend Web Development</h3>
             <p>
-              I build and customize websites using HTML, CSS and JavaScript.
-              My practical work includes page layouts, navigation, forms,
-              responsive styling, interactive elements and improvements to
-              existing website pages.
+              Build and maintain multi-page websites using semantic HTML,
+              CSS layouts and JavaScript. Implement navigation, responsive
+              interfaces, form interactions, search and filtering, and
+              incremental improvements to existing pages.
             </p>
-            <div class="tags">
-              <span class="tag red">HTML5</span>
-              <span class="tag">CSS3</span>
-              <span class="tag">JavaScript</span>
-              <span class="tag">Responsive layouts</span>
-              <span class="tag">DOM</span>
+            <div class="tech-list">
+              <span class="tech primary">HTML5</span>
+              <span class="tech primary">CSS3</span>
+              <span class="tech primary">JavaScript</span>
+              <span class="tech">Responsive design</span>
+              <span class="tech">DOM manipulation</span>
             </div>
           </article>
 
           <article class="card">
-            <div class="card-icon">
-              <i class="fa-solid fa-pen-ruler" aria-hidden="true"></i>
+            <div class="card-top">
+              <div class="card-icon"><i class="fa-solid fa-database"></i></div>
+              <div>
+                <h3>Database-Backed Applications</h3>
+                <div class="card-subtitle">Data and backend integration</div>
+              </div>
             </div>
-            <h3>Website Design and Maintenance</h3>
             <p>
-              I work on improving existing websites, maintaining consistent
-              navigation, organizing content, correcting layout issues and
-              adding practical features while preserving the original design.
+              Connect web interfaces to Supabase and work with PostgreSQL
+              tables, records, authentication and application data. Familiar
+              with CRUD workflows and the importance of database permissions
+              and Row Level Security.
             </p>
-            <div class="tags">
-              <span class="tag red">UI implementation</span>
-              <span class="tag">CSS debugging</span>
-              <span class="tag">Page maintenance</span>
-              <span class="tag">Mobile layouts</span>
+            <div class="tech-list">
+              <span class="tech primary">Supabase</span>
+              <span class="tech primary">PostgreSQL</span>
+              <span class="tech">SQL</span>
+              <span class="tech">CRUD operations</span>
+              <span class="tech">RLS concepts</span>
             </div>
           </article>
 
           <article class="card">
-            <div class="card-icon">
-              <i class="fa-brands fa-python" aria-hidden="true"></i>
+            <div class="card-top">
+              <div class="card-icon"><i class="fa-brands fa-python"></i></div>
+              <div>
+                <h3>Python Programming</h3>
+                <div class="card-subtitle">Programming and coursework</div>
+              </div>
             </div>
-            <h3>Python Programming</h3>
             <p>
-              My Python learning covers programming fundamentals, control
-              flow, functions, exception handling and solving problems
-              through code. I also study data-oriented programming and
-              database operations.
+              Academic and practical learning in Python syntax, functions,
+              control flow, exception handling and problem solving. Further
+              coursework includes Python for data science and data analysis.
             </p>
-            <div class="tags">
-              <span class="tag red">Python</span>
-              <span class="tag">Functions</span>
-              <span class="tag">Exception handling</span>
-              <span class="tag">Problem solving</span>
+            <div class="tech-list">
+              <span class="tech primary">Python</span>
+              <span class="tech">Functions</span>
+              <span class="tech">Exception handling</span>
+              <span class="tech">Data science foundations</span>
             </div>
           </article>
 
           <article class="card">
-            <div class="card-icon">
-              <i class="fa-solid fa-database" aria-hidden="true"></i>
+            <div class="card-top">
+              <div class="card-icon"><i class="fa-brands fa-github"></i></div>
+              <div>
+                <h3>Version Control &amp; Deployment</h3>
+                <div class="card-subtitle">Website publishing workflows</div>
+              </div>
             </div>
-            <h3>SQL and Database Fundamentals</h3>
             <p>
-              I study relational database concepts and work with database
-              structures, queries, relationships and CRUD operations.
-              My project work includes connecting websites to PostgreSQL
-              through Supabase.
+              Maintain website source files in GitHub repositories and
+              work with publishing workflows using GitHub Pages and Vercel.
+              Manage HTML updates, static assets, deployment changes and
+              website configuration.
             </p>
-            <div class="tags">
-              <span class="tag red">SQL</span>
-              <span class="tag">MySQL</span>
-              <span class="tag">PostgreSQL</span>
-              <span class="tag">CRUD</span>
-              <span class="tag">Relational databases</span>
-            </div>
-          </article>
-
-          <article class="card">
-            <div class="card-icon">
-              <i class="fa-solid fa-cloud" aria-hidden="true"></i>
-            </div>
-            <h3>Backend Integration and Authentication</h3>
-            <p>
-              My application projects involve connecting web interfaces to
-              Supabase, configuring authentication, working with database
-              records and learning how Row Level Security can protect
-              application data.
-            </p>
-            <div class="tags">
-              <span class="tag red">Supabase</span>
-              <span class="tag">Authentication</span>
-              <span class="tag">Database integration</span>
-              <span class="tag">RLS fundamentals</span>
-            </div>
-          </article>
-
-          <article class="card">
-            <div class="card-icon">
-              <i class="fa-brands fa-github" aria-hidden="true"></i>
-            </div>
-            <h3>Version Control and Deployment</h3>
-            <p>
-              I maintain website and application projects using GitHub and
-              work with deployment workflows. My experience includes
-              publishing websites with GitHub Pages and Vercel and managing
-              updates to website files.
-            </p>
-            <div class="tags">
-              <span class="tag red">GitHub</span>
-              <span class="tag">Git basics</span>
-              <span class="tag">GitHub Pages</span>
-              <span class="tag">Vercel</span>
+            <div class="tech-list">
+              <span class="tech primary">GitHub</span>
+              <span class="tech">Git basics</span>
+              <span class="tech">GitHub Pages</span>
+              <span class="tech">Vercel</span>
             </div>
           </article>
         </div>
       </section>
 
-      <!-- ================= COMPUTER SCIENCE FOUNDATION ================= -->
+      <!-- Projects and applied experience -->
 
-      <section class="section" aria-labelledby="csFoundation">
-        <div class="eyebrow">ACADEMIC FOUNDATION</div>
-        <h2 class="section-title" id="csFoundation">Beyond web development.</h2>
+      <section class="section" id="project-experience">
+        <div class="section-heading">
+          <div>
+            <div class="eyebrow">02 / Applied experience</div>
+            <h2>Projects &amp; practical work</h2>
+            <p class="section-description">
+              The strongest CV evidence is what I have actually built,
+              configured or maintained.
+            </p>
+          </div>
+        </div>
 
-        <p class="section-note">
-          My GTU Computer Science and Engineering curriculum helps me
-          understand the principles behind software, databases, networks,
-          data processing and computing systems.
+        <article class="project-card">
+          <div class="project-icon">
+            <i class="fa-solid fa-globe"></i>
+          </div>
+          <div>
+            <h3>Personal Website — agootson.is-a.dev</h3>
+            <p>
+              Develop and maintain a personal website with multiple pages,
+              consistent navigation, responsive layouts, project information
+              and a technical portfolio. Work includes editing existing
+              HTML/CSS, adding JavaScript interactions, improving page
+              structure and managing static website assets.
+            </p>
+            <div class="tech-list">
+              <span class="tech primary">HTML</span>
+              <span class="tech primary">CSS</span>
+              <span class="tech primary">JavaScript</span>
+              <span class="tech">GitHub</span>
+              <span class="tech">Static deployment</span>
+            </div>
+            <a class="project-link" href="index.html">
+              View personal website <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            </a>
+          </div>
+        </article>
+
+        <article class="project-card">
+          <div class="project-icon">
+            <i class="fa-solid fa-comments"></i>
+          </div>
+          <div>
+            <h3>Raanbaai — Social Application</h3>
+            <p>
+              Work on a React and Vite application connected to Supabase,
+              with social features such as posts, likes, comments and
+              notifications. The project involves frontend components,
+              authentication and persistence of application data.
+            </p>
+            <div class="tech-list">
+              <span class="tech primary">React</span>
+              <span class="tech primary">Vite</span>
+              <span class="tech primary">Supabase</span>
+              <span class="tech">PostgreSQL</span>
+              <span class="tech">Vercel</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="project-card">
+          <div class="project-icon">
+            <i class="fa-solid fa-wallet"></i>
+          </div>
+          <div>
+            <h3>MyFinance — Personal Finance Application</h3>
+            <p>
+              Develop a personal finance web application and work on the
+              integration of login, protected dashboard access and
+              database-backed user data. The intended architecture uses
+              Supabase Auth and PostgreSQL with Row Level Security.
+            </p>
+            <div class="tech-list">
+              <span class="tech primary">JavaScript</span>
+              <span class="tech">Supabase Auth</span>
+              <span class="tech">PostgreSQL</span>
+              <span class="tech">Row Level Security</span>
+              <span class="tech">GitHub Pages</span>
+            </div>
+            <p>
+              Security controls should be described as implemented only
+              after they have been configured and tested.
+            </p>
+          </div>
+        </article>
+
+        <article class="project-card">
+          <div class="project-icon">
+            <i class="fa-solid fa-pen-to-square"></i>
+          </div>
+         
+        </article>
+
+        <p class="section-description">
+          Project descriptions reflect the development work discussed for
+          these projects. Before using this page as a formal CV, verify
+          which features are completed, deployed and tested.
         </p>
+      </section>
 
-        <div class="grid">
-          <article class="card">
-            <div class="card-icon">
-              <i class="fa-solid fa-diagram-project" aria-hidden="true"></i>
-            </div>
-            <h3>Data Structures and Algorithms</h3>
-            <p>
-              Academic study of how information is organized and processed,
-              including arrays, linked lists, stacks, queues, trees,
-              searching and sorting concepts.
+      <!-- Academic knowledge -->
+
+      <section class="section" id="academic-foundation">
+        <div class="section-heading">
+          <div>
+            <div class="eyebrow">03 / Academic foundation</div>
+            <h2>Computer Science knowledge</h2>
+            <p class="section-description">
+              Relevant subjects from my Computer Science and Engineering
+              studies, presented as academic knowledge rather than
+              professional work experience.
             </p>
-            <div class="tags">
-              <span class="tag red">Data structures</span>
-              <span class="tag">Linked lists</span>
-              <span class="tag">Trees</span>
-              <span class="tag">Searching and sorting</span>
+          </div>
+        </div>
+
+        <div class="academic-list">
+          <article class="academic-item">
+            <i class="fa-solid fa-diagram-project"></i>
+            <div>
+              <h3>Data Structures &amp; Algorithms</h3>
+              <p>
+                Arrays, linked lists, stacks, queues, trees, searching
+                and sorting concepts.
+              </p>
             </div>
           </article>
 
-          <article class="card">
-            <div class="card-icon">
-              <i class="fa-solid fa-cubes" aria-hidden="true"></i>
-            </div>
-            <h3>Object-Oriented Programming</h3>
-            <p>
-              Understanding classes, objects, encapsulation, inheritance,
-              polymorphism and how object-oriented design helps organize
-              application code.
-            </p>
-            <div class="tags">
-              <span class="tag red">OOP</span>
-              <span class="tag">Classes and objects</span>
-              <span class="tag">Inheritance</span>
-              <span class="tag">Polymorphism</span>
+          <article class="academic-item">
+            <i class="fa-solid fa-cubes"></i>
+            <div>
+              <h3>Object-Oriented Programming</h3>
+              <p>
+                Classes, objects, encapsulation, inheritance and polymorphism.
+              </p>
             </div>
           </article>
 
-          <article class="card">
-            <div class="card-icon">
-              <i class="fa-solid fa-network-wired" aria-hidden="true"></i>
-            </div>
-            <h3>Computer Networks</h3>
-            <p>
-              Academic understanding of networking models, communication
-              protocols, addressing, routing concepts and how devices
-              communicate across networks.
-            </p>
-            <div class="tags">
-              <span class="tag red">Networking fundamentals</span>
-              <span class="tag">TCP/IP</span>
-              <span class="tag">OSI model</span>
-              <span class="tag">IP addressing</span>
+          <article class="academic-item">
+            <i class="fa-solid fa-network-wired"></i>
+            <div>
+              <h3>Computer Networks</h3>
+              <p>
+                Network models, communication protocols, addressing
+                and routing fundamentals.
+              </p>
             </div>
           </article>
 
-          <article class="card">
-            <div class="card-icon">
-              <i class="fa-solid fa-server" aria-hidden="true"></i>
-            </div>
-            <h3>Operating Systems and System Software</h3>
-            <p>
-              Studying processes, memory management, file systems,
-              operating system services and the software layers that
-              support the execution of applications.
-            </p>
-            <div class="tags">
-              <span class="tag red">Operating systems</span>
-              <span class="tag">Memory management</span>
-              <span class="tag">Processes</span>
-              <span class="tag">System software</span>
+          <article class="academic-item">
+            <i class="fa-solid fa-server"></i>
+            <div>
+              <h3>Operating Systems &amp; System Software</h3>
+              <p>
+                Processes, memory management, operating system concepts
+                and system-level software.
+              </p>
             </div>
           </article>
 
-          <article class="card">
-            <div class="card-icon">
-              <i class="fa-solid fa-microchip" aria-hidden="true"></i>
-            </div>
-            <h3>Computer Architecture and Microprocessors</h3>
-            <p>
-              Academic work covering computer organization, processor
-              fundamentals, microprocessors, interfacing and the relationship
-              between hardware instructions and software.
-            </p>
-            <div class="tags">
-              <span class="tag red">Computer architecture</span>
-              <span class="tag">Microprocessors</span>
-              <span class="tag">Interfacing</span>
-              <span class="tag">Digital fundamentals</span>
+          <article class="academic-item">
+            <i class="fa-solid fa-microchip"></i>
+            <div>
+              <h3>Computer Architecture &amp; Microprocessors</h3>
+              <p>
+                Computer organization, processor fundamentals and
+                microprocessor interfacing.
+              </p>
             </div>
           </article>
 
-          <article class="card">
-            <div class="card-icon">
-              <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
+          <article class="academic-item">
+            <i class="fa-solid fa-chart-line"></i>
+            <div>
+              <h3>Probability, Statistics &amp; Data Analysis</h3>
+              <p>
+                Statistical reasoning, probability, data interpretation
+                and analysis methods.
+              </p>
             </div>
-            <h3>Probability, Statistics and Data Analysis</h3>
-            <p>
-              Studying probability, statistical reasoning, data
-              interpretation and univariate, bivariate and multivariate
-              analysis as part of my Computer Science coursework.
-            </p>
-            <div class="tags">
-              <span class="tag red">Probability</span>
-              <span class="tag">Statistics</span>
-              <span class="tag">Data interpretation</span>
-              <span class="tag">Python for data science</span>
+          </article>
+
+          <article class="academic-item">
+            <i class="fa-solid fa-database"></i>
+            <div>
+              <h3>Database Management Systems</h3>
+              <p>
+                Relational models, SQL, database relationships and
+                data integrity concepts.
+              </p>
+            </div>
+          </article>
+
+          <article class="academic-item">
+            <i class="fa-solid fa-shield-halved"></i>
+            <div>
+              <h3>Cybersecurity — Developing Knowledge</h3>
+              <p>
+                Learning about authentication, authorization, secure
+                configuration and common application security principles.
+              </p>
             </div>
           </article>
         </div>
       </section>
 
-      <!-- ================= SECURITY LEARNING ================= -->
+      <!-- CV summary -->
 
-      <section class="section" aria-labelledby="securityLearning">
-        <div class="eyebrow">AREA OF INTEREST</div>
-        <h2 class="section-title" id="securityLearning">Security and reliable software.</h2>
+      <section class="section" id="professional-summary">
+        <div class="eyebrow">04 / Professional summary</div>
+        <h2>My technical direction</h2>
 
-        <p class="section-note">
-          Cybersecurity is an area I want to develop further. I am building
-          on my understanding of web technologies, authentication, databases
-          and networks rather than presenting myself as an established
-          security professional.
-        </p>
-
-        <div class="grid">
-          <article class="card">
-            <div class="card-icon">
-              <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
-            </div>
-            <h3>Cybersecurity Fundamentals</h3>
-            <p>
-              Developing an understanding of authentication, authorization,
-              secure configuration, common web security risks and the
-              importance of protecting user information.
-            </p>
-            <div class="tags">
-              <span class="tag red">Security fundamentals</span>
-              <span class="tag">Access control</span>
-              <span class="tag">Authentication</span>
-              <span class="tag">Web security learning</span>
-            </div>
-          </article>
-
-          <article class="card">
-            <div class="card-icon">
-              <i class="fa-solid fa-lock" aria-hidden="true"></i>
-            </div>
-            <h3>Database Access and Application Safety</h3>
-            <p>
-              Learning why public browser keys must be separated from
-              privileged secrets, how database permissions work and why
-              security policies must be enforced on the server.
-            </p>
-            <div class="tags">
-              <span class="tag red">RLS concepts</span>
-              <span class="tag">Least privilege</span>
-              <span class="tag">Secret management</span>
-              <span class="tag">Secure configuration</span>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <!-- ================= HOW I WORK ================= -->
-
-      <section class="section" aria-labelledby="workApproach">
-        <div class="eyebrow">PRACTICAL APPROACH</div>
-        <h2 class="section-title" id="workApproach">How I develop my skills.</h2>
-
-        <p class="section-note">
-          I learn by applying academic concepts to websites and software
-          projects, identifying problems and improving my implementation.
-        </p>
-
-        <div class="roadmap">
-          <article class="roadmap-item">
-            <div class="roadmap-icon">
-              <i class="fa-solid fa-code" aria-hidden="true"></i>
-            </div>
-            <div>
-              <h3>Build and improve real projects</h3>
-              <p>
-                Develop website pages and application features, test their
-                behavior, and refine the implementation when something
-                does not work as expected.
-              </p>
-            </div>
-          </article>
-
-          <article class="roadmap-item">
-            <div class="roadmap-icon">
-              <i class="fa-solid fa-book-open" aria-hidden="true"></i>
-            </div>
-            <div>
-              <h3>Strengthen Computer Science fundamentals</h3>
-              <p>
-                Connect practical programming with academic subjects such
-                as data structures, databases, networking and operating
-                systems.
-              </p>
-            </div>
-          </article>
-
-          <article class="roadmap-item">
-            <div class="roadmap-icon">
-              <i class="fa-solid fa-database" aria-hidden="true"></i>
-            </div>
-            <div>
-              <h3>Improve backend and database development</h3>
-              <p>
-                Continue learning database design, application integration,
-                authorization rules, deployment and the operation of
-                reliable web applications.
-              </p>
-            </div>
-          </article>
-
-          <article class="roadmap-item">
-            <div class="roadmap-icon">
-              <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
-            </div>
-            <div>
-              <h3>Develop security knowledge</h3>
-              <p>
-                Progress from foundational knowledge to structured
-                hands-on practice, documented projects and verifiable
-                cybersecurity training.
-              </p>
-            </div>
-          </article>
-        </div>
-
-        <div class="note-panel">
-          <h3>A note about my experience</h3>
+        <div class="summary-panel">
+          <h3>Computer Science student focused on practical software development.</h3>
           <p>
-            This page distinguishes practical project work from academic
-            study and areas I am still learning. It does not assign
-            unsupported proficiency percentages or claim professional
-            expertise where I have not established it.
+            My current focus is <span class="highlight">frontend web
+            development</span>, database-connected applications and
+            maintaining websites. I use personal projects to strengthen
+            my JavaScript, SQL, application integration and deployment
+            skills while continuing to study core Computer Science subjects.
+            I am also developing my understanding of software security.
           </p>
           <p>
-            My goal is to keep improving through completed projects,
-            consistent practice and demonstrable results.
+            I am interested in opportunities where I can contribute to
+            website development, learn from experienced developers and
+            demonstrate my abilities through working projects.
           </p>
         </div>
       </section>
 
-      <!-- ================= CONTACT ================= -->
+      <!-- Contact -->
 
-      <section class="section" aria-labelledby="skillsContact">
-        <div class="cta">
-          <div class="eyebrow">LET'S CONNECT</div>
-          <h2 id="skillsContact">Interested in my work?</h2>
-          <p>
-            Explore my projects, read my articles or contact me to discuss
-            a technical idea, collaboration or opportunity.
-          </p>
-          <a class="btn" href="project.html">
-            <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
-            Explore my projects
-          </a>
-          <a class="btn" href="contact.html">
-            <i class="fa-regular fa-paper-plane" aria-hidden="true"></i>
-            Contact me
-          </a>
-        </div>
+      <section class="cta" id="contact">
+        <div class="eyebrow">Next step</div>
+        <h2>Review my work.</h2>
+        <p>
+          My projects provide a more concrete view of my current skills
+          than a list of technologies alone. Explore my portfolio or
+          contact me to discuss a project or opportunity.
+        </p>
+        <a class="button" href="project.html">
+          <i class="fa-solid fa-layer-group"></i>
+          Explore projects
+        </a>
+        <a class="button secondary" href="contact.html">
+          <i class="fa-regular fa-envelope"></i>
+          Contact me
+        </a>
       </section>
-    </section>
 
-    <!-- ================= FOOTER ================= -->
+    </div>
 
     <footer>
-      <div>
-        <strong>David Agootson</strong>
-        <p>Computer Science · Web Development · Continuous Learning</p>
-      </div>
+      <strong>David <span>Agootson</span></strong>
+      <p>Computer Science &amp; Engineering · Technical Portfolio</p>
 
       <div class="socials">
+        <a href="https://github.com/agootson"
+           target="_blank" rel="noopener noreferrer"
+           aria-label="GitHub" title="GitHub">
+          <i class="fa-brands fa-github"></i>
+        </a>
         <a href="https://www.linkedin.com/in/agootson"
            target="_blank" rel="noopener noreferrer"
            aria-label="LinkedIn" title="LinkedIn">
-          <i class="fa-brands fa-linkedin-in" aria-hidden="true"></i>
+          <i class="fa-brands fa-linkedin-in"></i>
         </a>
-
-        <a href="https://www.threads.net/@agootson"
-           target="_blank" rel="noopener noreferrer"
-           aria-label="Threads" title="Threads">
-          <i class="fa-brands fa-threads" aria-hidden="true"></i>
-        </a>
-
-        <a href="https://www.facebook.com/agootson"
-           target="_blank" rel="noopener noreferrer"
-           aria-label="Facebook" title="Facebook">
-          <i class="fa-brands fa-facebook-f" aria-hidden="true"></i>
-        </a>
-
         <a href="https://x.com/agootson"
            target="_blank" rel="noopener noreferrer"
            aria-label="X" title="X">
-          <i class="fa-brands fa-x-twitter" aria-hidden="true"></i>
+          <i class="fa-brands fa-x-twitter"></i>
         </a>
-
         <a href="https://www.instagram.com/agootson"
            target="_blank" rel="noopener noreferrer"
            aria-label="Instagram" title="Instagram">
-          <i class="fa-brands fa-instagram" aria-hidden="true"></i>
-        </a>
-
-        <a href="https://www.youtube.com/@agootson"
-           target="_blank" rel="noopener noreferrer"
-           aria-label="YouTube" title="YouTube">
-          <i class="fa-brands fa-youtube" aria-hidden="true"></i>
-        </a>
-
-        <a href="https://www.reddit.com/user/hereoutsidethebox/"
-           target="_blank" rel="noopener noreferrer"
-           aria-label="Reddit" title="Reddit">
-          <i class="fa-brands fa-reddit-alien" aria-hidden="true"></i>
+          <i class="fa-brands fa-instagram"></i>
         </a>
       </div>
 
-      <p class="copyright">
-        © <span id="year"></span> David Agootson. All rights reserved.
-      </p>
+      <p>© <span id="year"></span> David Agootson. All rights reserved.</p>
     </footer>
   </main>
 
@@ -1279,58 +1149,53 @@
     "use strict";
 
     const sidebar = document.getElementById("sidebar");
-    const collapse = document.getElementById("collapse");
+    const collapseButton = document.getElementById("collapse");
     const mobileMenu = document.getElementById("mobileMenu");
     const backdrop = document.getElementById("backdrop");
 
-    // Desktop sidebar: collapse without hiding navigation buttons.
-    collapse.addEventListener("click", () => {
+    collapseButton.addEventListener("click", () => {
       const collapsed = document.body.classList.toggle("collapsed");
-      collapse.setAttribute("aria-expanded", String(!collapsed));
-      collapse.setAttribute(
+
+      collapseButton.setAttribute("aria-expanded", String(!collapsed));
+      collapseButton.setAttribute(
         "aria-label",
-        collapsed ? "Expand sidebar" : "Collapse sidebar"
+        collapsed ? "Expand navigation" : "Collapse navigation"
       );
     });
 
-    // Mobile navigation.
-    function mobileSidebar(open) {
+    function setMobileMenu(open) {
       sidebar.classList.toggle("open", open);
       backdrop.classList.toggle("show", open);
+
       mobileMenu.setAttribute("aria-expanded", String(open));
       mobileMenu.setAttribute(
         "aria-label",
         open ? "Close navigation" : "Open navigation"
       );
+
       document.body.style.overflow = open ? "hidden" : "";
     }
 
     mobileMenu.addEventListener("click", () => {
-      mobileSidebar(!sidebar.classList.contains("open"));
+      setMobileMenu(!sidebar.classList.contains("open"));
     });
 
     backdrop.addEventListener("click", () => {
-      mobileSidebar(false);
+      setMobileMenu(false);
     });
 
-    document.querySelectorAll(".nav a").forEach(link => {
+    sidebar.querySelectorAll(".nav a").forEach(link => {
       link.addEventListener("click", () => {
-        if (window.innerWidth <= 900) {
-          mobileSidebar(false);
-        }
+        if (window.innerWidth <= 900) setMobileMenu(false);
       });
     });
 
     document.addEventListener("keydown", event => {
-      if (event.key === "Escape") {
-        mobileSidebar(false);
-      }
+      if (event.key === "Escape") setMobileMenu(false);
     });
 
     window.addEventListener("resize", () => {
-      if (window.innerWidth > 900) {
-        mobileSidebar(false);
-      }
+      if (window.innerWidth > 900) setMobileMenu(false);
     });
 
     document.getElementById("year").textContent =
