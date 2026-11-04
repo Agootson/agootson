@@ -592,16 +592,46 @@ footer {
     function isFavorite(photo) { return getFavorites().has(photoKey(photo)); }
 
     function toggleFavorite(photo) {
+      if (!photo) return;
+
       const favorites = getFavorites();
       const key = photoKey(photo);
-      if (favorites.has(key)) favorites.delete(key); else favorites.add(key);
+      const wasFavorite = favorites.has(key);
+
+      if (wasFavorite) favorites.delete(key);
+      else favorites.add(key);
+
       saveFavorites(favorites);
       renderGallery();
-      if (currentIndex >= 0) {
-        const newIndex = filteredPhotos.findIndex(p => photoKey(p) === key);
-        if (newIndex >= 0) currentIndex = newIndex;
-        updateLightboxFavorite(photo);
+
+      // If the lightbox is open, keep its selected photo/index in sync
+      // with the newly filtered gallery.
+      if (!lightbox.classList.contains("show") || currentIndex < 0) return;
+
+      const newIndex = filteredPhotos.findIndex(p => photoKey(p) === key);
+
+      if (newIndex >= 0) {
+        currentIndex = newIndex;
+        lightboxCounter.textContent = `${currentIndex + 1} / ${filteredPhotos.length}`;
+        updateLightboxFavorite(filteredPhotos[currentIndex]);
+        return;
       }
+
+      // Removing the current photo while viewing Favorites removes it
+      // from the result set. Show the next available photo, or close
+      // the viewer when no favourites remain.
+      if (favoritesOnly && wasFavorite) {
+        if (!filteredPhotos.length) {
+          closeLightbox();
+          return;
+        }
+
+        currentIndex = Math.min(currentIndex, filteredPhotos.length - 1);
+        openLightbox(currentIndex);
+        return;
+      }
+
+      closeLightbox();
     }
 
     function formatDate(value) {
@@ -664,22 +694,50 @@ footer {
       return card;
     }
 
-    function buildFilters() {
-      const availableCategories = [
-        "Daily Life",
-        "College",
-        "Travel",
-        "Friends",
-        "Family",
-        "Places",
-        "Nature",
-        "Sports"
-      ];
+    const STANDARD_CATEGORIES = [
+      "Daily Life",
+      "College",
+      "Travel",
+      "Friends",
+      "Family",
+      "Places",
+      "Nature",
+      "Sports"
+    ];
 
-      const usedCategories = photos.map(p => p.category).filter(Boolean);
-      const categories = ["All", ...new Set([...availableCategories, ...usedCategories])];
-      categoryCount.textContent = Math.max(0, categories.length - 1);
+    const STANDARD_CATEGORY_LOOKUP = new Map(
+      STANDARD_CATEGORIES.map(category => [category.toLocaleLowerCase(), category])
+    );
+
+    function normalizeCategory(value) {
+      const cleaned = String(value || "Daily Life").trim().replace(/\\s+/g, " ");
+      if (!cleaned) return "Daily Life";
+
+      // Match standard categories without regard to capitalisation.
+      // Preserve the spelling of custom categories, while trimming whitespace.
+      return STANDARD_CATEGORY_LOOKUP.get(cleaned.toLocaleLowerCase()) || cleaned;
+    }
+
+    function buildFilters() {
+      const categoryMap = new Map();
+
+      photos.forEach(photo => {
+        photo.category = normalizeCategory(photo.category);
+        const key = photo.category.toLocaleLowerCase();
+
+        // One visible category per case-insensitive category name.
+        if (!categoryMap.has(key)) categoryMap.set(key, photo.category);
+      });
+
+      const usedCategories = [...categoryMap.values()].sort((a, b) => a.localeCompare(b));
+      const categories = ["All", ...usedCategories];
+
+      // Do not leave the filter pointing at a category that no longer exists.
+      if (!categories.includes(activeCategory)) activeCategory = "All";
+
+      categoryCount.textContent = usedCategories.length;
       filterBar.replaceChildren();
+
       categories.forEach(category => {
         const button = document.createElement("button");
         button.type = "button";
